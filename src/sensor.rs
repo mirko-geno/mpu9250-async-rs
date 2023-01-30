@@ -10,6 +10,7 @@ use crate::error::{Error, InitError};
 use crate::fifo::Fifo;
 use crate::gyro::{Gyro, GyroFullScale};
 use crate::registers::Register;
+use core::fmt::Debug;
 use embedded_hal::blocking::delay;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
@@ -17,8 +18,8 @@ use embedded_hal::blocking::i2c::{Write, WriteRead};
 pub struct Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     i2c: I2c,
     address: u8,
@@ -27,8 +28,8 @@ where
 impl<I2c> Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     /// Construct a new i2c driver for the MPU-6050
     pub fn new(i2c: I2c, address: Address) -> Result<Self, InitError<I2c>> {
@@ -107,9 +108,6 @@ where
     pub(crate) fn write_register(&mut self, reg: Register, value: u8) -> Result<(), Error<I2c>> {
         self.write(&[reg as u8, value])
     }
-
-    // ------------------------------------------------------------------------
-    // ------------------------------------------------------------------------
 
     /// Perform power reset of the MPU
     pub fn reset(&mut self, clock: &mut impl delay::DelayMs<u32>) -> Result<(), Error<I2c>> {
@@ -202,7 +200,7 @@ where
         Ok(())
     }
 
-    /// Through calibration, taken from https://wired.chillibasket.com/2015/01/calibrating-mpu6050/
+    /// Through calibration, taken from <https://wired.chillibasket.com/2015/01/calibrating-mpu6050/>
     /// This is supposed to be run once, printing the results, and reusing them by setting the
     /// calibration using `set_accel_calibration` and `set_gyro_calibration` with offsets hardcoded
     /// as constants in the application code (or storing and retrieving them to-from persistent
@@ -226,8 +224,10 @@ where
         collect_mean_values(self, delay, accel_scale, gravity)
     }
 
-    /// A higher level building block for performing calibration.
-    /// This function should be called repeatedly, until `is_empty()` returns `true` on the
+    /// Perform a full device calibration (note that this function might never terminate).
+    ///
+    /// A higher level building block for performing calibration,
+    /// this function should be called repeatedly, until `is_empty()` returns `true` on the
     /// returned `CalibrationActions`.
     ///
     /// At each iteration the calibration gets "better", and it is considered completed when
@@ -273,8 +273,6 @@ where
     ///
     /// When the loop is done the offsets can be collected and hardcoded in the initialization
     /// of the application that will use this device with exactly these settings.
-
-    /// Perform a full device calibration (note that this function might never terminate).
     pub fn calibration_loop(
         &mut self,
         delay: &mut impl delay::DelayMs<u32>,

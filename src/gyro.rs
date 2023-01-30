@@ -62,10 +62,10 @@ pub enum GyroFullScale {
 impl GyroFullScale {
     pub const fn scale(self) -> f32 {
         match self {
-            GyroFullScale::Deg250 => 131.0,
-            GyroFullScale::Deg500 => 65.5,
-            GyroFullScale::Deg1000 => 32.8,
-            GyroFullScale::Deg2000 => 16.4,
+            Self::Deg250 => 131.0,
+            Self::Deg500 => 65.5,
+            Self::Deg1000 => 32.8,
+            Self::Deg2000 => 16.4,
         }
     }
 

@@ -2,6 +2,7 @@ use crate::dmp_firmware::FIRMWARE;
 use crate::error::Error;
 use crate::registers::Register;
 use crate::sensor::Mpu6050;
+use core::fmt::Debug;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 const BANK_SIZE: usize = 256;
@@ -10,8 +11,8 @@ const CHUNK_SIZE: usize = 16;
 impl<I2c> Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     pub fn load_firmware(&mut self) -> Result<(), Error<I2c>> {
         //log::info!("loading firmware");

@@ -1,3 +1,4 @@
+use core::fmt::Debug;
 use core::fmt::Formatter;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
@@ -5,18 +6,18 @@ use embedded_hal::blocking::i2c::{Write, WriteRead};
 pub struct InitError<I2c>
 where
     I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     pub i2c: I2c,
     pub error: Error<I2c>,
 }
 
-impl<I2c> core::fmt::Debug for InitError<I2c>
+impl<I2c> Debug for InitError<I2c>
 where
     I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         self.error.fmt(f)
@@ -27,25 +28,25 @@ where
 pub enum Error<I2c>
 where
     I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     WriteError(<I2c as Write>::Error),
     WriteReadError(<I2c as WriteRead>::Error),
     WrongDevice,
 }
 
-impl<I2c> core::fmt::Debug for Error<I2c>
+impl<I2c> Debug for Error<I2c>
 where
     I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::result::Result<(), core::fmt::Error> {
         match self {
-            Error::WriteReadError(e) => f.debug_tuple("WriteReadError").field(e).finish(),
-            Error::WriteError(e) => f.debug_tuple("WriteError").field(e).finish(),
-            Error::WrongDevice => f.write_str("WrongDevice"),
+            Self::WriteReadError(e) => f.debug_tuple("WriteReadError").field(e).finish(),
+            Self::WriteError(e) => f.debug_tuple("WriteError").field(e).finish(),
+            Self::WrongDevice => f.write_str("WrongDevice"),
         }
     }
 }

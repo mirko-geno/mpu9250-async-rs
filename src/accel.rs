@@ -62,10 +62,10 @@ pub enum AccelFullScale {
 impl AccelFullScale {
     pub const fn scale(self) -> f32 {
         match self {
-            AccelFullScale::G2 => 16384.0,
-            AccelFullScale::G4 => 8192.0,
-            AccelFullScale::G8 => 4096.0,
-            AccelFullScale::G16 => 2048.0,
+            Self::G2 => 16384.0,
+            Self::G4 => 8192.0,
+            Self::G8 => 4096.0,
+            Self::G16 => 2048.0,
         }
     }
 

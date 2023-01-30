@@ -4,6 +4,7 @@ use crate::{
     gyro::{Gyro, GyroFullScale},
     sensor::Mpu6050,
 };
+use core::fmt::Debug;
 use embedded_hal::blocking::delay::DelayMs;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
@@ -113,13 +114,13 @@ impl ReferenceGravity {
     /// Acceleration vector representing gravity compensation in the given direction
     pub fn gravity_compensation(self, scale: AccelFullScale) -> Accel {
         match self {
-            ReferenceGravity::Zero => Accel::new(0, 0, 0),
-            ReferenceGravity::XN => Accel::new(-Self::gravity_value(scale), 0, 0),
-            ReferenceGravity::XP => Accel::new(Self::gravity_value(scale), 0, 0),
-            ReferenceGravity::YN => Accel::new(0, -Self::gravity_value(scale), 0),
-            ReferenceGravity::YP => Accel::new(0, Self::gravity_value(scale), 0),
-            ReferenceGravity::ZN => Accel::new(0, 0, -Self::gravity_value(scale)),
-            ReferenceGravity::ZP => Accel::new(0, 0, Self::gravity_value(scale)),
+            Self::Zero => Accel::new(0, 0, 0),
+            Self::XN => Accel::new(-Self::gravity_value(scale), 0, 0),
+            Self::XP => Accel::new(Self::gravity_value(scale), 0, 0),
+            Self::YN => Accel::new(0, -Self::gravity_value(scale), 0),
+            Self::YP => Accel::new(0, Self::gravity_value(scale), 0),
+            Self::ZN => Accel::new(0, 0, -Self::gravity_value(scale)),
+            Self::ZP => Accel::new(0, 0, Self::gravity_value(scale)),
         }
     }
 }
@@ -289,7 +290,7 @@ impl CalibrationParameters {
     }
 }
 
-/// Holds temporary vaues during sample mean computation
+/// Holds temporary values during sample mean computation
 /// (includes the reference gravity compensation for simplicity)
 pub struct MeanAccumulator {
     pub ax: i32,
@@ -341,7 +342,7 @@ impl MeanAccumulator {
     }
 }
 
-/// Number of warmup iterations (when values are discardet)
+/// Number of warmup iterations (when values are discarded)
 const WARMUP_ITERATIONS: usize = 30;
 /// Number of iterations for average error computation
 const ITERATIONS: usize = 200;
@@ -357,8 +358,8 @@ pub fn collect_mean_values<I2c>(
 ) -> Result<(Accel, Gyro), Error<I2c>>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     let mut accumulator = MeanAccumulator::new(accel_scale, gravity);
 
@@ -378,7 +379,7 @@ where
     Ok(accumulator.means())
 }
 
-/// A single, full-fledged calibration loop (it also alters the device offest)
+/// A single, full-fledged calibration loop (it also alters the device offset)
 pub fn calibration_loop<I2c>(
     mpu: &mut Mpu6050<I2c>,
     delay: &mut impl DelayMs<u32>,
@@ -387,8 +388,8 @@ pub fn calibration_loop<I2c>(
 ) -> Result<(CalibrationActions, Accel, Gyro), Error<I2c>>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     let mut actions = actions;
 
@@ -465,8 +466,8 @@ pub fn calibrate<I2c>(
 ) -> Result<(Accel, Gyro), Error<I2c>>
 where
     I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: core::fmt::Debug,
-    <I2c as Write>::Error: core::fmt::Debug,
+    <I2c as WriteRead>::Error: Debug,
+    <I2c as Write>::Error: Debug,
 {
     let mut actions = CalibrationActions::all();
     while !actions.is_empty() {
