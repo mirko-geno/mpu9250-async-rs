@@ -1,23 +1,20 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+
+use embedded_hal::i2c::I2c;
 
 /// Error during initialization of sensor. Wraps [`Error`].
-pub struct InitError<I2c>
+pub struct InitError<I>
 where
-    I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
-    pub i2c: I2c,
-    pub error: Error<I2c>,
+    pub i2c: I,
+    pub error: Error<I>,
 }
 
-impl<I2c> Debug for InitError<I2c>
+impl<I> Debug for InitError<I>
 where
-    I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         self.error.fmt(f)
@@ -25,22 +22,18 @@ where
 }
 
 /// Error for sensor operations.
-pub enum Error<I2c>
+pub enum Error<I>
 where
-    I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
-    WriteError(<I2c as Write>::Error),
-    WriteReadError(<I2c as WriteRead>::Error),
+    WriteError(I::Error),
+    WriteReadError(I::Error),
     WrongDevice,
 }
 
-impl<I2c> Debug for Error<I2c>
+impl<I> Debug for Error<I>
 where
-    I2c: WriteRead + Write,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::result::Result<(), core::fmt::Error> {
         match self {

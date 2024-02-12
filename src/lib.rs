@@ -16,11 +16,3 @@ pub mod quaternion;
 pub mod registers;
 pub mod sensor;
 pub mod yaw_pitch_roll;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

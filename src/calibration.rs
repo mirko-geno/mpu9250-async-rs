@@ -5,8 +5,7 @@ use crate::{
     sensor::Mpu6050,
 };
 use core::fmt::Debug;
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::{delay::DelayNs, i2c::I2c};
 
 // The threshold value that average readings must not cross after calibration.
 #[derive(Copy, Clone, Debug)]
@@ -350,16 +349,14 @@ const ITERATIONS: usize = 200;
 const DELAY_MS: u32 = 2;
 
 /// Perform a single loop computing the means of the readings
-pub fn collect_mean_values<I2c>(
-    mpu: &mut Mpu6050<I2c>,
-    delay: &mut impl DelayMs<u32>,
+pub fn collect_mean_values<I>(
+    mpu: &mut Mpu6050<I>,
+    delay: &mut impl DelayNs,
     accel_scale: AccelFullScale,
     gravity: ReferenceGravity,
-) -> Result<(Accel, Gyro), Error<I2c>>
+) -> Result<(Accel, Gyro), Error<I>>
 where
-    I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
     let mut accumulator = MeanAccumulator::new(accel_scale, gravity);
 
@@ -380,16 +377,14 @@ where
 }
 
 /// A single, full-fledged calibration loop (it also alters the device offset)
-pub fn calibration_loop<I2c>(
-    mpu: &mut Mpu6050<I2c>,
-    delay: &mut impl DelayMs<u32>,
+pub fn calibration_loop<I>(
+    mpu: &mut Mpu6050<I>,
+    delay: &mut impl DelayNs,
     parameters: &CalibrationParameters,
     actions: CalibrationActions,
-) -> Result<(CalibrationActions, Accel, Gyro), Error<I2c>>
+) -> Result<(CalibrationActions, Accel, Gyro), Error<I>>
 where
-    I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
     let mut actions = actions;
 
@@ -459,15 +454,13 @@ where
 }
 
 /// Repeatedly perform calibration loops until the errors are within the given thresholds
-pub fn calibrate<I2c>(
-    mpu: &mut Mpu6050<I2c>,
-    delay: &mut impl DelayMs<u32>,
+pub fn calibrate<I>(
+    mpu: &mut Mpu6050<I>,
+    delay: &mut impl DelayNs,
     parameters: &CalibrationParameters,
-) -> Result<(Accel, Gyro), Error<I2c>>
+) -> Result<(Accel, Gyro), Error<I>>
 where
-    I2c: Write + WriteRead,
-    <I2c as WriteRead>::Error: Debug,
-    <I2c as Write>::Error: Debug,
+    I: I2c,
 {
     let mut actions = CalibrationActions::all();
     while !actions.is_empty() {
