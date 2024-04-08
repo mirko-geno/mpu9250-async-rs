@@ -7,8 +7,6 @@ pub struct Gravity {
     pub z: f32,
 }
 
-impl Gravity {}
-
 impl From<Quaternion> for Gravity {
     fn from(q: Quaternion) -> Self {
         Self {

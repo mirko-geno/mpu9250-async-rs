@@ -1,6 +1,6 @@
 use core::fmt::{Debug, Formatter};
 
-use embedded_hal::i2c::I2c;
+use embedded_hal_async::i2c::I2c;
 
 /// Error during initialization of sensor. Wraps [`Error`].
 pub struct InitError<I>

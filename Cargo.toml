@@ -15,4 +15,5 @@ readme = "README.md"
 
 [dependencies]
 embedded-hal = { version = "1" }
+embedded-hal-async = { version = "1" }
 libm = "0.2"

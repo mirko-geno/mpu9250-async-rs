@@ -7,8 +7,6 @@ pub struct Euler {
     pub phi: f64,
 }
 
-impl Euler {}
-
 impl From<Quaternion> for Euler {
     fn from(q: Quaternion) -> Self {
         Self {

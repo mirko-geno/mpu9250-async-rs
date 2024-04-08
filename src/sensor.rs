@@ -1,17 +1,16 @@
-use crate::accel::{Accel, AccelFullScale};
-use crate::address::Address;
-use crate::calibration::{
-    calibrate, calibration_loop, collect_mean_values, CalibrationActions, CalibrationParameters,
-    ReferenceGravity,
+use crate::{
+    accel::{Accel, AccelFullScale},
+    address::Address,
+    calibration::{CalibrationActions, CalibrationParameters, ReferenceGravity},
+    calibration_blocking::{calibrate, calibration_loop, collect_mean_values},
+    clock_source::ClockSource,
+    config::DigitalLowPassFilter,
+    error::{Error, InitError},
+    fifo::Fifo,
+    gyro::{Gyro, GyroFullScale},
+    registers::Register,
 };
-use crate::clock_source::ClockSource;
-use crate::config::DigitalLowPassFilter;
-use crate::error::{Error, InitError};
-use crate::fifo::Fifo;
-use crate::gyro::{Gyro, GyroFullScale};
-use crate::registers::Register;
-use embedded_hal::delay;
-use embedded_hal::i2c::I2c;
+use embedded_hal::{delay, i2c::I2c};
 
 /// InvenSense MPU-6050 Driver
 pub struct Mpu6050<I>
