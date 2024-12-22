@@ -1,3 +1,8 @@
+//! Blocking implementation of the MPU-6050 driver.
+//!
+//! This module provides the core functionality for interacting with the MPU-6050 sensor
+//! in a blocking manner. For async operations, see the `sensor_async` module.
+
 use crate::temperature::Temperature;
 use crate::{
     accel::{Accel, AccelFullScale},
@@ -13,7 +18,10 @@ use crate::{
 };
 use embedded_hal::{delay, i2c::I2c};
 
-/// InvenSense MPU-6050 Driver
+/// Blocking implementation of the InvenSense MPU-6050 driver.
+///
+/// Provides methods for sensor configuration, calibration, and data reading
+/// using blocking I2C operations.
 pub struct Mpu6050<I>
 where
     I: I2c,

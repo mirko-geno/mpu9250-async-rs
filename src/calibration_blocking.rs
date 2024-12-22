@@ -1,3 +1,13 @@
+//! Blocking Calibration Implementation
+//!
+//! This module provides synchronous (blocking) versions of the calibration routines:
+//! - Collecting sensor readings with blocking I/O
+//! - Computing calibration offsets
+//! - Adjusting sensor calibration with blocking I2C operations
+//!
+//! The calibration process runs in a loop until all axes are within
+//! their specified thresholds, using standard blocking I/O operations.
+
 use crate::{
     accel::{Accel, AccelFullScale},
     calibration::{

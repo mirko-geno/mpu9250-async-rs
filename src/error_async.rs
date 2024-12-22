@@ -1,8 +1,13 @@
-use core::fmt::{Debug, Formatter};
+//! Error types for asynchronous MPU-6050 operations.
+//!
+//! This module provides error types specific to async I2C communication
+//! and device initialization for the MPU-6050 sensor.
 
+use core::fmt::{Debug, Formatter};
 use embedded_hal_async::i2c::I2c;
 
-/// Error during initialization of sensor. Wraps [`Error`].
+/// Error that occurs during async initialization of the MPU-6050 sensor.
+/// Contains both the error and the I2C interface for error recovery.
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct InitError<I>
 where
@@ -21,14 +26,19 @@ where
     }
 }
 
-/// Error for sensor operations.
+/// Error types that can occur during async sensor operations.
+///
+/// Represents failures in I2C communication and device validation.
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum Error<I>
 where
     I: I2c,
 {
+    /// Error occurred during an I2C write operation
     WriteError(I::Error),
+    /// Error occurred during an I2C write-read operation
     WriteReadError(I::Error),
+    /// Device did not respond as an MPU-6050
     WrongDevice,
 }
 
