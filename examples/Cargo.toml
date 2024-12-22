@@ -1,0 +1,67 @@
+[package]
+name = "embassy-async-example"
+version = "0.1.0"
+edition = "2021"
+
+[[example]]
+name = "basic_async"
+path = "src/basic_async.rs"
+
+[[example]]
+name = "dmp_features"
+path = "src/dmp_features.rs"
+
+[[example]]
+name = "fifo_buffer"
+path = "src/fifo_buffer.rs"
+
+[[example]]
+name = "quaternion"
+path = "src/quaternion.rs"
+
+[[example]]
+name = "motion_detection"
+path = "src/motion_detection.rs"
+
+[dependencies]
+embassy-rp = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+    "unstable-pac",
+    "time-driver",
+    "critical-section-impl",
+    "rp235xa",
+] }
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+] }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+] }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy", features = [
+    "task-arena-size-98304",
+    "arch-cortex-m",
+    "executor-thread",
+    "executor-interrupt",
+    "defmt",
+] }
+embassy-time = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+    "defmt-timestamp-uptime",
+] }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy" }
+defmt = "0.3"
+defmt-rtt = "0.4"
+cortex-m-rt = "0.7.5"
+critical-section = "1.2.0"
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+mpu6050-dmp = { path = "..", features = ["async"] }
+num-traits = { version = "0.2", default-features = false }
+libm = "0.2.1"
+
+[patch.crates-io]
+embassy-rp = { git = "https://github.com/embassy-rs/embassy" }
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy" }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy" }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy" }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy" }
