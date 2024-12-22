@@ -1,3 +1,13 @@
+//! Asynchronous Calibration Implementation
+//!
+//! This module provides async versions of the calibration routines:
+//! - Collecting sensor readings asynchronously
+//! - Computing calibration offsets without blocking
+//! - Adjusting sensor calibration with non-blocking I2C operations
+//!
+//! The calibration process runs in a loop until all axes are within
+//! their specified thresholds, using async/await for efficient I/O.
+
 use crate::{
     accel::{Accel, AccelFullScale},
     calibration::{

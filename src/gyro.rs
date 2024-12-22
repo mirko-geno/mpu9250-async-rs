@@ -1,5 +1,13 @@
-/// Raw gyro readings vector.
-/// Also used to represent gyro calibration offsets.
+//! Gyroscope Data Processing
+//!
+//! The MPU6050's gyroscope measures angular velocity (rotation speed)
+//! around three axes:
+//! - X: Roll rate (side-to-side rotation)
+//! - Y: Pitch rate (forward/backward rotation)
+//! - Z: Yaw rate (horizontal rotation)
+
+/// Raw gyroscope readings from the sensor.
+/// Values represent rotation rate in ADC units.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct Gyro {
@@ -52,12 +60,23 @@ impl Gyro {
     }
 }
 
+/// Full-scale range settings for the gyroscope.
+///
+/// Each setting defines the maximum measurable rotation rate:
+/// - Deg250: ±250 degrees/second
+/// - Deg500: ±500 degrees/second
+/// - Deg1000: ±1000 degrees/second
+/// - Deg2000: ±2000 degrees/second
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum GyroFullScale {
+    /// ±250°/s range (131 LSB/°/s)
     Deg250 = 0,
+    /// ±500°/s range (65.5 LSB/°/s)
     Deg500 = 1,
+    /// ±1000°/s range (32.8 LSB/°/s)
     Deg1000 = 2,
+    /// ±2000°/s range (16.4 LSB/°/s)
     Deg2000 = 3,
 }
 
@@ -76,11 +95,19 @@ impl GyroFullScale {
     }
 }
 
+/// Gyroscope readings in degrees per second.
+///
+/// After scaling, values represent actual rotation rates:
+/// - Positive: Clockwise rotation
+/// - Negative: Counter-clockwise rotation
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct GyroF32 {
+    /// Roll rate (°/s)
     x: f32,
+    /// Pitch rate (°/s)
     y: f32,
+    /// Yaw rate (°/s)
     z: f32,
 }
 

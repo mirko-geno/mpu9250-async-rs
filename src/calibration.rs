@@ -1,3 +1,11 @@
+//! MPU6050 Sensor Calibration
+//!
+//! Calibration process:
+//! - Takes multiple readings while sensor is stationary
+//! - Calculates offset values to zero out errors
+//! - Compensates for gravity's effect on accelerometer
+//! - Stores calibration in sensor registers
+
 use crate::{
     accel::{Accel, AccelFullScale},
     gyro::{Gyro, GyroFullScale},
@@ -11,7 +19,7 @@ pub(crate) const ITERATIONS: usize = 200;
 /// Delay between measurements
 pub(crate) const DELAY_MS: u32 = 2;
 
-// The threshold value that average readings must not cross after calibration.
+/// Maximum allowed deviation from zero after calibration
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct CalibrationThreshold {
@@ -91,8 +99,13 @@ impl CalibrationThreshold {
     }
 }
 
-/// Symbolic representation of a gravity vector aligned to one of the axes
-/// (gravity must be subtracted to acceleration readings during calibration)
+/// Reference gravity direction for calibration.
+///
+/// During calibration, one axis should point straight down:
+/// - XN/XP: X-axis pointing down/up
+/// - YN/YP: Y-axis pointing down/up
+/// - ZN/ZP: Z-axis pointing down/up
+/// - Zero: No gravity compensation
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum ReferenceGravity {
@@ -130,8 +143,11 @@ impl ReferenceGravity {
     }
 }
 
-/// Bit flags stating which axes must still be calibrated
-/// (six bits are used: acceleration x, y, z and gyro x, y, z)
+/// Tracks which sensor axes still need calibration.
+///
+/// Each bit represents one axis:
+/// - Bits 0-2: Accelerometer (X,Y,Z)
+/// - Bits 3-5: Gyroscope (X,Y,Z)
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct CalibrationActions {
@@ -223,8 +239,13 @@ impl CalibrationActions {
     }
 }
 
-/// Calibration parameters.
-/// (all the values that influence calibration and do not change between calibration loop runs)
+/// Configuration for the calibration process.
+///
+/// Parameters control:
+/// - Sensor ranges (AccelFullScale, GyroFullScale)
+/// - Acceptable error thresholds
+/// - Number of samples to take
+/// - Gravity compensation direction
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct CalibrationParameters {
@@ -297,8 +318,12 @@ impl CalibrationParameters {
     }
 }
 
-/// Holds temporary values during sample mean computation
-/// (includes the reference gravity compensation for simplicity)
+/// Accumulates sensor readings during calibration.
+///
+/// Stores:
+/// - Running sum of accelerometer readings
+/// - Running sum of gyroscope readings
+/// - Gravity compensation vector
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct MeanAccumulator {
     pub ax: i32,

@@ -1,3 +1,21 @@
+//! MPU6050 Asynchronous Driver Implementation
+//!
+//! This module provides a non-blocking interface to the InvenSense MPU-6050 6-axis motion tracking device.
+//! It implements all sensor functionality using async/await for efficient I/O operations:
+//!
+//! Core Features:
+//! - Non-blocking I2C communication using embedded-hal-async
+//! - Full sensor configuration (scales, filters, clock sources)
+//! - Motion sensing (acceleration and gyroscope)
+//! - Temperature measurement
+//! - Digital Motion Processor (DMP) support
+//! - FIFO buffer management
+//! - Advanced calibration routines
+//!
+//! This implementation mirrors the blocking version (sensor.rs) but provides
+//! asynchronous alternatives for all operations, making it suitable for
+//! embedded systems running async executors.
+
 use crate::temperature::Temperature;
 use crate::{
     accel::{Accel, AccelFullScale},
@@ -166,12 +184,26 @@ where
         self.read_register(Register::IntStatus).await
     }
 
-    /// Through calibration, taken from <https://wired.chillibasket.com/2015/01/calibrating-mpu6050/>
-    /// This is supposed to be run once, printing the results, and reusing them by setting the
-    /// calibration using `set_accel_calibration` and `set_gyro_calibration` with offsets hardcoded
-    /// as constants in the application code (or storing and retrieving them to-from persistent
-    /// storage, if available).
-    /// If calibration parameters are not "reasonable" this function might never return.
+    /// Calibrates the accelerometer and gyroscope to minimize sensor bias and drift.
+    ///
+    /// This calibration process:
+    /// 1. Takes multiple readings while the sensor is stationary
+    /// 2. Calculates offset values to compensate for:
+    ///    - Accelerometer bias (deviation from expected gravity vector)
+    ///    - Gyroscope drift (non-zero readings when stationary)
+    /// 3. Stores these offsets in the sensor's registers
+    ///
+    /// The calibration should be performed:
+    /// - Once during initial setup
+    /// - With the sensor perfectly still and properly oriented
+    /// - According to the ReferenceGravity parameter (e.g., ZN means Z-axis pointing down)
+    ///
+    /// The resulting calibration values should be:
+    /// - Saved and reused via `set_accel_calibration` and `set_gyro_calibration`
+    /// - Stored as constants or in persistent storage
+    ///
+    /// Note: If the sensor is not properly oriented or moving during calibration,
+    /// this function may never complete as it tries to achieve unreachable targets.
     pub async fn calibrate(
         &mut self,
         delay: &mut impl delay::DelayNs,
@@ -302,10 +334,37 @@ where
         self.write_register(Register::GyroConfig, value).await
     }
 
+    /// Sets the sample rate divider to control sensor output data rate.
+    ///
+    /// The sensor's output data rate is calculated as:
+    /// Sample Rate = Gyroscope Output Rate / (1 + divider)
+    ///
+    /// Where Gyroscope Output Rate is:
+    /// - 8kHz when DLPF is disabled (filter 0 or 7)
+    /// - 1kHz when DLPF is enabled (filter 1-6)
+    ///
+    /// Common divider values:
+    /// - 0: Maximum rate (8kHz or 1kHz)
+    /// - 4: 200Hz (good for motion tracking)
+    /// - 9: 100Hz (good balance of speed/power)
+    /// - 99: 10Hz (power saving mode)
+    ///
+    /// Note: Lower sample rates reduce power consumption but increase latency.
     pub async fn set_sample_rate_divider(&mut self, div: u8) -> Result<(), Error<I>> {
         self.write_register(Register::SmpRtDiv, div).await
     }
 
+    /// Configures the Digital Low Pass Filter (DLPF) to reduce noise in sensor readings.
+    ///
+    /// The DLPF helps remove:
+    /// - High frequency vibrations
+    /// - Electrical noise
+    /// - Motion artifacts
+    ///
+    /// Filter options balance between:
+    /// - Noise reduction (higher filtering)
+    /// - Latency (higher filtering = more delay)
+    /// - Bandwidth (lower filtering = more responsive)
     pub async fn set_digital_lowpass_filter(
         &mut self,
         filter: DigitalLowPassFilter,
@@ -399,6 +458,19 @@ where
     }
 
     /// Gets the 6 degrees of freedom at once - Acceleration and Gyroscope.
+    /// Reads both accelerometer and gyroscope data in a single operation.
+    ///
+    /// This method is more efficient than separate accel() and gyro() calls because:
+    /// 1. It requires only one I2C transaction
+    /// 2. The readings are synchronized (taken at the same time)
+    /// 3. Reduces timing jitter between acceleration and rotation data
+    ///
+    /// Returns:
+    /// - Accelerometer data (x,y,z) in g-forces
+    /// - Gyroscope data (x,y,z) in degrees/second
+    ///
+    /// Note: The values depend on the current full-scale settings
+    /// configured via set_accel_full_scale() and set_gyro_full_scale()
     pub async fn motion6(&mut self) -> Result<(Accel, Gyro), Error<I>> {
         let mut data = [0; 14];
         self.read_registers(Register::AccelX_H, &mut data).await?;

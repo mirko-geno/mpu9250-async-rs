@@ -1,3 +1,13 @@
+//! MPU6050 Digital Motion Processor (DMP) Firmware
+//!
+//! This module contains the binary firmware data for the MPU6050's DMP.
+//! The DMP is a programmable processor inside the MPU6050 that:
+//! - Processes motion data directly on the sensor
+//! - Performs sensor fusion and quaternion calculations
+//! - Reduces main processor load
+//!
+//! This firmware data is loaded into the DMP's program memory during initialization.
+
 pub const FIRMWARE: [u8; 3062] = [
     /* bank # 0 */
     0x00, 0xF8, 0xF6, 0x2A, 0x3F, 0x68, 0xF5, 0x7A, 0x00, 0x06, 0xFF, 0xFE, 0x00, 0x03, 0x00, 0x00,

@@ -1,5 +1,20 @@
-/// Raw acceleration readings vector.
-/// Also used to represent acceleration calibration offsets.
+//! Accelerometer Data Processing
+//!
+//! The MPU6050's accelerometer measures linear acceleration along three axes:
+//! - X: Forward/backward motion
+//! - Y: Left/right motion
+//! - Z: Up/down motion (including gravity)
+//!
+//! Raw readings are in ADC units and must be scaled according to the
+//! configured full-scale range to get actual g-force values.
+
+/// Raw acceleration readings from the sensor's ADC.
+///
+/// This structure represents:
+/// - Raw sensor readings (when reading acceleration)
+/// - Calibration offsets (when used for calibration)
+/// - Values are in ADC units (-32768 to +32767)
+/// - Must be scaled by full-scale range for g-force values
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct Accel {
@@ -13,6 +28,12 @@ impl Accel {
         Self { x, y, z }
     }
 
+    /// Converts raw sensor bytes into acceleration values.
+    ///
+    /// The MPU6050 provides 16-bit acceleration values as:
+    /// - 2 bytes per axis (high byte, low byte)
+    /// - Big-endian byte order
+    /// - Signed integers (-32768 to +32767)
     pub fn from_bytes(data: [u8; 6]) -> Self {
         let x = [data[0], data[1]];
         let y = [data[2], data[3]];
@@ -43,6 +64,12 @@ impl Accel {
         self.z
     }
 
+    /// Converts raw ADC values to g-force units.
+    ///
+    /// The conversion process:
+    /// 1. Takes raw ADC values (-32768 to +32767)
+    /// 2. Divides by scale factor based on full-scale range
+    /// 3. Results in g-force values (e.g., ±2g, ±4g, etc.)
     pub fn scaled(&self, scale: AccelFullScale) -> AccelF32 {
         AccelF32 {
             x: scale.scale_value(self.x),
@@ -52,12 +79,28 @@ impl Accel {
     }
 }
 
+/// Full-scale range settings for the accelerometer.
+///
+/// Each setting provides different sensitivity:
+/// - G2: ±2g range (most sensitive, best for small movements)
+/// - G4: ±4g range
+/// - G8: ±8g range
+/// - G16: ±16g range (least sensitive, best for high-impact movements)
+///
+/// The range affects:
+/// - Sensitivity (LSB/g) - higher range = lower sensitivity
+/// - Resolution - lower range = better resolution
+/// - Maximum measurable acceleration
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum AccelFullScale {
+    /// ±2g range (16384 LSB/g)
     G2 = 0,
+    /// ±4g range (8192 LSB/g)
     G4 = 1,
+    /// ±8g range (4096 LSB/g)
     G8 = 2,
+    /// ±16g range (2048 LSB/g)
     G16 = 3,
 }
 
@@ -76,11 +119,24 @@ impl AccelFullScale {
     }
 }
 
+/// Acceleration values in g-force units.
+///
+/// This structure holds accelerometer data after conversion from
+/// raw ADC values to actual g-forces. Values typically range:
+/// - ±2g in G2 mode
+/// - ±4g in G4 mode
+/// - ±8g in G8 mode
+/// - ±16g in G16 mode
+///
+/// Note: The Z axis will read ~1g when stationary due to gravity
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[derive(Debug, Clone, Copy)]
 pub struct AccelF32 {
+    /// X-axis acceleration in g-force
     x: f32,
+    /// Y-axis acceleration in g-force  
     y: f32,
+    /// Z-axis acceleration in g-force
     z: f32,
 }
 

@@ -1,8 +1,22 @@
-use core::fmt::{Debug, Formatter};
+//! MPU6050 Error Types
+//!
+//! This module defines the error types that can occur when:
+//! - Initializing the sensor
+//! - Communicating over I2C
+//! - Validating sensor responses
 
+use core::fmt::{Debug, Formatter};
 use embedded_hal::i2c::I2c;
 
-/// Error during initialization of sensor. Wraps [`Error`].
+/// Error that occurs during sensor initialization.
+///
+/// Initialization can fail due to:
+/// - I2C communication errors
+/// - Wrong device connected (incorrect WHO_AM_I response)
+/// - Power-on reset failure
+/// - Configuration errors
+///
+/// Contains both the error and the I2C interface for error recovery.
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct InitError<I>
 where
@@ -21,14 +35,37 @@ where
     }
 }
 
-/// Error for sensor operations.
+/// Errors that can occur during normal sensor operation.
+///
+/// These errors typically happen when:
+/// - Reading sensor data
+/// - Writing configuration values
+/// - Accessing the FIFO buffer
+/// - Loading DMP firmware
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum Error<I>
 where
     I: I2c,
 {
+    /// Failed to write data to sensor
+    /// Common causes:
+    /// - I2C bus busy
+    /// - Device not responding
+    /// - Incorrect address
     WriteError(I::Error),
+
+    /// Failed to read data from sensor
+    /// Common causes:
+    /// - I2C bus busy
+    /// - Device not responding
+    /// - Invalid register address
     WriteReadError(I::Error),
+
+    /// Connected device is not an MPU6050
+    /// Common causes:
+    /// - Wrong device connected
+    /// - Incorrect I2C address
+    /// - Device malfunction
     WrongDevice,
 }
 
