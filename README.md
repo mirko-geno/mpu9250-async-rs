@@ -11,8 +11,21 @@ Reasons/differences:
 * Slight difference in conversion of Quaternion to YPR (no `pitch -= PI`)
 * Various fixes for e.g. clippy lints (also PR'd upstream)
 
-## [Demo Project for STM32F1](https://github.com/barafael/mpu6050-dmp-demo-f1)
-## [Demo Project for STM32F4](https://github.com/barafael/mpu6050-dmp-demo-f4)
+## Examples
+
+The `examples` directory contains several examples demonstrating different features:
+
+- **Basic Async**: Basic sensor initialization and data reading
+- **DMP Features**: Digital Motion Processor usage and configuration
+- **FIFO Buffer**: FIFO buffer operations and data processing
+- **Quaternion**: 3D orientation tracking using quaternions
+- **Motion Detection**: Hardware motion detection with configurable sensitivity
+
+See the [examples README](examples/README.md) for detailed information.
+
+## Demo Projects
+- [Demo Project for STM32F1](https://github.com/barafael/mpu6050-dmp-demo-f1)
+- [Demo Project for STM32F4](https://github.com/barafael/mpu6050-dmp-demo-f4)
 
 ## On-Chip DMP 'Digital Motion Processor'
 

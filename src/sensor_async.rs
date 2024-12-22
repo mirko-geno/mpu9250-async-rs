@@ -27,7 +27,7 @@ use crate::{
     error_async::{Error, InitError},
     fifo::Fifo,
     gyro::{Gyro, GyroFullScale},
-    motion::{MotionConfig, MotionStatus},
+    motion::{MotionConfig, MotionDetected},
     registers::Register,
 };
 
@@ -490,9 +490,31 @@ where
 
     /// Configure motion detection parameters.
     ///
-    /// This sets up the hardware motion detection feature with specified:
-    /// - Threshold: How much acceleration triggers motion detection (in mg)
-    /// - Duration: How many consecutive samples must exceed threshold
+    /// The MPU-6050's hardware motion detection compares consecutive accelerometer samples
+    /// to detect movement. When the difference between samples exceeds the threshold for
+    /// the specified duration, a motion event is triggered.
+    ///
+    /// Configuration process:
+    /// 1. Sets motion threshold (1 LSB = 2mg)
+    /// 2. Sets minimum duration of motion
+    /// 3. Enables detection on all axes
+    /// 4. Configures high-pass filter to remove gravity bias
+    ///
+    /// For maximum sensitivity:
+    /// - Use threshold = 1 (2mg) to detect subtle movements
+    /// - Use duration = 1 (1ms at 1kHz) for fast response
+    /// - Enable motion detection on all axes
+    /// - Enable high-pass filter to isolate motion from gravity
+    ///
+    /// For more stable detection:
+    /// - Increase threshold (4-10) to ignore minor vibrations
+    /// - Increase duration (5-20) to require sustained motion
+    /// - Adjust DLPF settings to filter noise
+    ///
+    /// Note: The effectiveness of motion detection depends on:
+    /// - Proper sensor calibration
+    /// - Sample rate configuration
+    /// - Digital low-pass filter (DLPF) settings
     pub async fn configure_motion_detection(
         &mut self,
         config: &MotionConfig,
@@ -505,9 +527,22 @@ where
         self.write_register(Register::MotionDuration, config.duration)
             .await?;
 
-        // Configure motion detection control (use accelerometer for detection)
-        self.write_register(Register::MotionDetectCtrl, 0x15)
+        // Configure motion detection control:
+        // Bit 7 - Enable motion detection of all axes
+        // Bit 6 - Enable motion detection of all axes
+        // Bit 5 - Enable motion detection of all axes
+        // Bit 4 - Enable motion detection of all axes
+        // Bit 3 - Enable motion detection of all axes
+        // Bit 2 - Enable motion detection of all axes
+        // Bit 1:0 - Reserved
+        // Setting 0xFC: Enable motion detection on all axes
+        self.write_register(Register::MotionDetectCtrl, 0xFC)
             .await?;
+
+        // Configure accelerometer HPF for motion detection
+        let mut config = self.read_register(Register::AccelConfig).await?;
+        config |= 0x07; // Enable HPF, set to maximum bandwidth
+        self.write_register(Register::AccelConfig, config).await?;
 
         Ok(())
     }
@@ -530,17 +565,16 @@ where
         self.write_register(Register::IntEnable, value).await
     }
 
-    /// Get current motion detection status.
-    pub async fn get_motion_status(&mut self) -> Result<MotionStatus, Error<I>> {
+    /// Check if motion is currently detected
+    pub async fn check_motion(&mut self) -> Result<MotionDetected, Error<I>> {
         let status = self.read_register(Register::MotionDetectStatus).await?;
         Ok(status.into())
     }
 
-    /// Wait for a change in motion state.
+    /// Wait for motion to be detected.
     ///
-    /// This method will asynchronously wait until the motion state changes:
-    /// - From still to moving (returns Moving)
-    /// - From moving to still (returns Still)
+    /// This method will asynchronously wait until motion is detected based on the
+    /// configured threshold and duration parameters.
     ///
     /// Make sure to call `configure_motion_detection()` and `enable_motion_interrupt()`
     /// before using this method.
@@ -555,26 +589,24 @@ where
     /// mpu.configure_motion_detection(&config).await?;
     /// mpu.enable_motion_interrupt().await?;
     ///
-    /// // Monitor motion changes
+    /// // Monitor for motion
     /// loop {
-    ///     let status = mpu.wait_for_motion_change(&mut delay).await?;
-    ///     match status {
-    ///         MotionStatus::Moving => println!("Motion detected!"),
-    ///         MotionStatus::Still => println!("Device is stationary"),
+    ///     if mpu.wait_for_motion(&mut delay).await?.0 {
+    ///         println!("Motion detected!");
     ///     }
     /// }
     /// ```
-    pub async fn wait_for_motion_change(
+    pub async fn wait_for_motion(
         &mut self,
         delay: &mut impl delay::DelayNs,
-    ) -> Result<MotionStatus, Error<I>> {
-        // Wait for interrupt
+    ) -> Result<MotionDetected, Error<I>> {
+        // Wait for motion interrupt
         while (self.read_register(Register::IntStatus).await? & (1 << 6)) == 0 {
             // Yield to other tasks while waiting
             delay.delay_us(1).await;
         }
 
-        // Get and return motion status
-        self.get_motion_status().await
+        // Clear interrupt and return motion detected
+        Ok(MotionDetected(true))
     }
 }

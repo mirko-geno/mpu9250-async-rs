@@ -1,10 +1,31 @@
-//! MPU6050-DMP Motion Detection Example
+//! MPU6050 Motion Detection Example
 //!
-//! This example demonstrates hardware motion detection using the MPU6050's built-in features:
-//! - Initializing and calibrating the sensor
-//! - Configuring hardware motion detection thresholds
-//! - Using interrupts to detect movement changes
-//! - Asynchronously waiting for movement state changes
+//! This example demonstrates how to use the MPU6050's hardware motion detection feature
+//! to efficiently detect movement without constant CPU monitoring. The implementation:
+//!
+//! 1. Configures the sensor for maximum sensitivity:
+//!    - Sets minimum threshold (2mg) to detect subtle movements
+//!    - Uses fastest response time (1ms) for immediate detection
+//!    - Enables detection on all axes for complete coverage
+//!    - Configures high-pass filter to remove gravity bias
+//!
+//! 2. Optimizes sensor settings:
+//!    - Uses most sensitive accelerometer range (±2g)
+//!    - Sets maximum sample rate (1kHz)
+//!    - Configures DLPF for best motion detection
+//!    - Performs proper sensor calibration
+//!
+//! 3. Monitors motion events:
+//!    - Uses interrupts for efficient detection
+//!    - Provides detailed motion data when triggered
+//!    - Shows both acceleration and rotation values
+//!    - Logs motion detection status for debugging
+//!
+//! The configuration used here prioritizes maximum sensitivity and fast response.
+//! For different use cases:
+//! - Increase threshold to ignore minor movements
+//! - Increase duration to require sustained motion
+//! - Adjust DLPF settings to filter more noise
 //!
 //! Hardware Setup:
 //! - Connect MPU6050 to Raspberry Pi Pico:
@@ -24,9 +45,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 // mpu6050-dmp
 use mpu6050_dmp::{
-    address::Address,
-    calibration::CalibrationParameters,
-    motion::{MotionConfig, MotionStatus},
+    address::Address, calibration::CalibrationParameters, motion::MotionConfig,
     sensor_async::Mpu6050,
 };
 
@@ -52,9 +71,26 @@ async fn main(_spawner: Spawner) {
 
     info!("MPU6050-DMP Sensor Initialized");
 
-    // Initialize DMP
-    info!("Initializing DMP");
-    sensor.initialize_dmp(&mut delay).await.unwrap();
+    // Configure sensor settings
+    sensor
+        .set_clock_source(mpu6050_dmp::clock_source::ClockSource::Xgyro)
+        .await
+        .unwrap();
+
+    // Set accelerometer full scale to most sensitive range
+    sensor
+        .set_accel_full_scale(mpu6050_dmp::accel::AccelFullScale::G2)
+        .await
+        .unwrap();
+
+    // Configure DLPF for maximum sensitivity
+    sensor
+        .set_digital_lowpass_filter(mpu6050_dmp::config::DigitalLowPassFilter::Filter6)
+        .await
+        .unwrap();
+
+    // Set sample rate to 1kHz (1ms period)
+    sensor.set_sample_rate_divider(0).await.unwrap();
 
     // Configure calibration parameters
     let calibration_params = CalibrationParameters::new(
@@ -70,10 +106,10 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     info!("Sensor Calibrated");
 
-    // Configure motion detection
+    // Configure motion detection with maximum sensitivity
     let motion_config = MotionConfig {
-        threshold: 1, // 40mg threshold
-        duration: 10, // ~5ms at 1kHz sample rate
+        threshold: 1, // 2mg threshold (minimum possible)
+        duration: 1,  // 1ms at 1kHz sample rate (fastest response)
     };
     sensor
         .configure_motion_detection(&motion_config)
@@ -81,25 +117,29 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     sensor.enable_motion_interrupt().await.unwrap();
 
-    info!("Starting movement detection");
+    info!("Starting motion detection");
 
-    // Main loop monitoring movement changes
+    // Main loop monitoring motion detection events
     loop {
-        match sensor.wait_for_motion_change(&mut delay).await.unwrap() {
-            MotionStatus::Moving => {
-                info!("Movement detected!");
-                // Get current acceleration for debugging
-                let accel = sensor.accel().await.unwrap();
-                info!(
-                    "Current acceleration: x={}, y={}, z={}",
-                    accel.x(),
-                    accel.y(),
-                    accel.z()
-                );
-            }
-            MotionStatus::Still => {
-                info!("Device is now stationary");
-            }
+        // Wait for motion detection events
+        if sensor.wait_for_motion(&mut delay).await.unwrap().0 {
+            // Get motion status and current sensor data
+            let motion = sensor.check_motion().await.unwrap();
+            let (accel, gyro) = sensor.motion6().await.unwrap();
+
+            info!("Motion detected! Status: {}", motion.0);
+            info!(
+                "Accel: x={}, y={}, z={}",
+                accel.x() as i32,
+                accel.y() as i32,
+                accel.z() as i32
+            );
+            info!(
+                "Gyro: x={}, y={}, z={}",
+                gyro.x() as i32,
+                gyro.y() as i32,
+                gyro.z() as i32
+            );
         }
     }
 }

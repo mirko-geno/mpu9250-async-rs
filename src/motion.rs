@@ -1,7 +1,23 @@
 //! Motion detection configuration for the MPU-6050.
 //!
-//! This module provides types for configuring the hardware motion detection
-//! features of the MPU-6050 sensor.
+//! The MPU-6050 provides hardware motion detection capabilities that can efficiently
+//! detect movement without constant CPU monitoring. The detection works by:
+//!
+//! 1. Comparing consecutive accelerometer samples
+//! 2. Triggering when the difference exceeds the configured threshold
+//! 3. Only signaling after the threshold is exceeded for the specified duration
+//!
+//! Key concepts:
+//! - Threshold (in mg): How much acceleration change triggers detection
+//! - Duration (in samples): How many consecutive samples must exceed threshold
+//! - High-pass filter: Removes gravity bias for better motion isolation
+//! - All-axis detection: Monitors movement in any direction
+//!
+//! For best results:
+//! - Use lower threshold (2-10mg) for subtle movement detection
+//! - Use shorter duration (1-5ms) for quick response
+//! - Enable the high-pass filter to remove gravity effects
+//! - Configure all axes for complete motion coverage
 
 /// Motion detection configuration parameters
 #[derive(Debug, Clone, Copy)]
@@ -27,21 +43,13 @@ impl Default for MotionConfig {
     }
 }
 
-/// Motion detection status
+/// Indicates if motion was detected based on the configured threshold and duration
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum MotionStatus {
-    /// No motion detected
-    Still,
-    /// Motion detected
-    Moving,
-}
+pub struct MotionDetected(pub bool);
 
-impl From<u8> for MotionStatus {
+impl From<u8> for MotionDetected {
     fn from(value: u8) -> Self {
-        if (value & 0x40) != 0 {
-            MotionStatus::Moving
-        } else {
-            MotionStatus::Still
-        }
+        // Bit 6 indicates motion was detected
+        MotionDetected((value & 0x40) != 0)
     }
 }
