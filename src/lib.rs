@@ -19,6 +19,8 @@ mod firmware_loader;
 mod firmware_loader_async;
 pub mod gravity;
 pub mod gyro;
+#[cfg(feature = "async")]
+pub mod motion;
 pub mod quaternion;
 pub mod registers;
 pub mod sensor;

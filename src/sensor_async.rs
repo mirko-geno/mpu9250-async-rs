@@ -27,6 +27,7 @@ use crate::{
     error_async::{Error, InitError},
     fifo::Fifo,
     gyro::{Gyro, GyroFullScale},
+    motion::{MotionConfig, MotionStatus},
     registers::Register,
 };
 
@@ -485,5 +486,95 @@ where
         let mut data = [0; 2];
         self.read_registers(Register::TempOut_H, &mut data).await?;
         Ok(Temperature::from_bytes(data))
+    }
+
+    /// Configure motion detection parameters.
+    ///
+    /// This sets up the hardware motion detection feature with specified:
+    /// - Threshold: How much acceleration triggers motion detection (in mg)
+    /// - Duration: How many consecutive samples must exceed threshold
+    pub async fn configure_motion_detection(
+        &mut self,
+        config: &MotionConfig,
+    ) -> Result<(), Error<I>> {
+        // Set motion detection threshold
+        self.write_register(Register::MotionThreshold, config.threshold)
+            .await?;
+
+        // Set motion detection duration
+        self.write_register(Register::MotionDuration, config.duration)
+            .await?;
+
+        // Configure motion detection control (use accelerometer for detection)
+        self.write_register(Register::MotionDetectCtrl, 0x15)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Enable motion detection interrupt.
+    ///
+    /// After enabling, use `wait_for_motion()` to asynchronously wait for motion events.
+    pub async fn enable_motion_interrupt(&mut self) -> Result<(), Error<I>> {
+        // Enable motion interrupt (bit 6)
+        let mut value = self.read_register(Register::IntEnable).await?;
+        value |= 1 << 6;
+        self.write_register(Register::IntEnable, value).await
+    }
+
+    /// Disable motion detection interrupt.
+    pub async fn disable_motion_interrupt(&mut self) -> Result<(), Error<I>> {
+        // Disable motion interrupt (bit 6)
+        let mut value = self.read_register(Register::IntEnable).await?;
+        value &= !(1 << 6);
+        self.write_register(Register::IntEnable, value).await
+    }
+
+    /// Get current motion detection status.
+    pub async fn get_motion_status(&mut self) -> Result<MotionStatus, Error<I>> {
+        let status = self.read_register(Register::MotionDetectStatus).await?;
+        Ok(status.into())
+    }
+
+    /// Wait for a change in motion state.
+    ///
+    /// This method will asynchronously wait until the motion state changes:
+    /// - From still to moving (returns Moving)
+    /// - From moving to still (returns Still)
+    ///
+    /// Make sure to call `configure_motion_detection()` and `enable_motion_interrupt()`
+    /// before using this method.
+    ///
+    /// # Example
+    /// ```ignore
+    /// // Configure motion detection
+    /// let config = MotionConfig {
+    ///     threshold: 20,  // 40mg threshold
+    ///     duration: 5,    // ~5ms at 1kHz sample rate
+    /// };
+    /// mpu.configure_motion_detection(&config).await?;
+    /// mpu.enable_motion_interrupt().await?;
+    ///
+    /// // Monitor motion changes
+    /// loop {
+    ///     let status = mpu.wait_for_motion_change(&mut delay).await?;
+    ///     match status {
+    ///         MotionStatus::Moving => println!("Motion detected!"),
+    ///         MotionStatus::Still => println!("Device is stationary"),
+    ///     }
+    /// }
+    /// ```
+    pub async fn wait_for_motion_change(
+        &mut self,
+        delay: &mut impl delay::DelayNs,
+    ) -> Result<MotionStatus, Error<I>> {
+        // Wait for interrupt
+        while (self.read_register(Register::IntStatus).await? & (1 << 6)) == 0 {
+            // Yield to other tasks while waiting
+            delay.delay_us(1).await;
+        }
+
+        // Get and return motion status
+        self.get_motion_status().await
     }
 }

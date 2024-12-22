@@ -1,14 +1,10 @@
 //! MPU6050-DMP Motion Detection Example
 //!
-//! This example demonstrates software motion detection using the MPU6050's accelerometer:
+//! This example demonstrates hardware motion detection using the MPU6050's built-in features:
 //! - Initializing and calibrating the sensor
-//! - Reading accelerometer data
-//! - Detecting motion by monitoring acceleration changes
-//! - Detecting periods of stillness
-//!
-//! Note: This example uses software motion detection since the hardware
-//! motion detection registers are not currently exposed in the driver.
-//! Consider contributing to the driver to add support for hardware motion detection.
+//! - Configuring hardware motion detection thresholds
+//! - Using interrupts to detect movement changes
+//! - Asynchronously waiting for movement state changes
 //!
 //! Hardware Setup:
 //! - Connect MPU6050 to Raspberry Pi Pico:
@@ -20,16 +16,19 @@
 #![no_std]
 #![no_main]
 
-use defmt::{info, Debug2Format};
+use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
-use embassy_time::{Delay, Timer};
-use libm::sqrt;
-use num_traits::float::FloatCore;
+use embassy_time::Delay;
 use {defmt_rtt as _, panic_probe as _};
 
 // mpu6050-dmp
-use mpu6050_dmp::{address::Address, calibration::CalibrationParameters, sensor_async::Mpu6050};
+use mpu6050_dmp::{
+    address::Address,
+    calibration::CalibrationParameters,
+    motion::{MotionConfig, MotionStatus},
+    sensor_async::Mpu6050,
+};
 
 embassy_rp::bind_interrupts!(struct Irqs {
     I2C1_IRQ => InterruptHandler<embassy_rp::peripherals::I2C1>;
@@ -38,11 +37,6 @@ embassy_rp::bind_interrupts!(struct Irqs {
 #[link_section = ".start_block"]
 #[used]
 pub static IMAGE_DEF: ImageDef = ImageDef::secure_exe();
-
-// Motion detection parameters
-const MOTION_THRESHOLD: f64 = 0.2; // g-force threshold for motion detection
-const STILLNESS_THRESHOLD: f64 = 0.05; // g-force threshold for stillness detection
-const STILLNESS_DURATION: u32 = 10; // number of consecutive readings below threshold for stillness
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -76,48 +70,36 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     info!("Sensor Calibrated");
 
-    info!("Starting motion detection");
+    // Configure motion detection
+    let motion_config = MotionConfig {
+        threshold: 1, // 40mg threshold
+        duration: 10, // ~5ms at 1kHz sample rate
+    };
+    sensor
+        .configure_motion_detection(&motion_config)
+        .await
+        .unwrap();
+    sensor.enable_motion_interrupt().await.unwrap();
 
-    // Variables for motion detection
-    let mut last_accel = sensor.accel().await.unwrap();
-    let mut stillness_counter = 0;
-    let mut in_motion = false;
+    info!("Starting movement detection");
 
-    // Main loop monitoring motion
+    // Main loop monitoring movement changes
     loop {
-        let accel = sensor.accel().await.unwrap();
-
-        // Get scaled acceleration values in g-force units
-        let accel_g = accel.scaled(mpu6050_dmp::accel::AccelFullScale::G2);
-        let last_accel_g = last_accel.scaled(mpu6050_dmp::accel::AccelFullScale::G2);
-
-        // Calculate acceleration change in g-force
-        let delta_x = (accel_g.x() - last_accel_g.x()).abs();
-        let delta_y = (accel_g.y() - last_accel_g.y()).abs();
-        let delta_z = (accel_g.z() - last_accel_g.z()).abs();
-
-        // Total acceleration change
-        let total_delta = sqrt((delta_x * delta_x + delta_y * delta_y + delta_z * delta_z) as f64);
-
-        // Motion detection
-        if total_delta > MOTION_THRESHOLD as f64 {
-            if !in_motion {
-                info!("Motion detected!");
-                info!("Acceleration: {:?}", Debug2Format(&accel));
-                in_motion = true;
+        match sensor.wait_for_motion_change(&mut delay).await.unwrap() {
+            MotionStatus::Moving => {
+                info!("Movement detected!");
+                // Get current acceleration for debugging
+                let accel = sensor.accel().await.unwrap();
+                info!(
+                    "Current acceleration: x={}, y={}, z={}",
+                    accel.x(),
+                    accel.y(),
+                    accel.z()
+                );
             }
-            stillness_counter = 0;
-        } else if total_delta < STILLNESS_THRESHOLD as f64 {
-            stillness_counter += 1;
-            if stillness_counter >= STILLNESS_DURATION && in_motion {
-                info!("Zero motion (standstill) detected");
-                in_motion = false;
+            MotionStatus::Still => {
+                info!("Device is now stationary");
             }
-        } else {
-            stillness_counter = 0;
         }
-
-        last_accel = accel;
-        Timer::after_millis(50).await;
     }
 }

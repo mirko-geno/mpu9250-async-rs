@@ -131,4 +131,14 @@ pub enum Register {
     PrgmStart = 0x70,
     /// DMP Configuration
     DmpConfig = 0x71,
+
+    // Motion Detection Registers
+    /// Motion Detection Threshold (1LSB = 2mg)
+    MotionThreshold = 0x1F,
+    /// Motion Detection Duration Counter
+    MotionDuration = 0x20,
+    /// Motion Detection Control
+    MotionDetectCtrl = 0x69,
+    /// Motion Detection Status
+    MotionDetectStatus = 0x61,
 }

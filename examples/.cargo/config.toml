@@ -2,7 +2,9 @@
 # pick one of the following options by uncommenting:
 # runner = "elf2uf2-rs -d" #and then flash manually
 # runner = "picotool load -u -v -x -t elf"
-# probe-rs run --chip RP235x --protocol swd --speed 16000" #probe-rs cannot currently support this target, al later release might
+# runner = probe-rs run --chip RP235x --protocol swd --speed 16000" #probe-rs cannot currently support this target, al later release might
+runner = "probe-rs-wip run --chip RP235x --protocol swd --speed 16000"
+
 
 [build]
 target = "thumbv8m.main-none-eabihf"
