@@ -17,7 +17,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{info, Debug2Format};
+use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
 use embassy_time::{Delay, Timer};
@@ -63,13 +63,23 @@ async fn main(_spawner: Spawner) {
     // The accelerometer measures linear acceleration in three axes (X, Y, Z)
     // Values will be imprecise until calibration is performed
     let accel_data = sensor.accel().await.unwrap();
-    info!("Accelerometer Data: {:?}", Debug2Format(&accel_data));
+    info!(
+        "Accelerometer [mg]: x={}, y={}, z={}",
+        accel_data.x() as i32,
+        accel_data.y() as i32,
+        accel_data.z() as i32
+    );
 
     // Read raw gyroscope data (uncalibrated)
     // The gyroscope measures angular velocity in three axes (X, Y, Z)
     // Values will have drift and bias until calibration is performed
     let gyro_data = sensor.gyro().await.unwrap();
-    info!("Gyroscope Data: {:?}", Debug2Format(&gyro_data));
+    info!(
+        "Gyroscope [deg/s]: x={}, y={}, z={}",
+        gyro_data.x() as i32,
+        gyro_data.y() as i32,
+        gyro_data.z() as i32
+    );
 
     // Configure sensor calibration parameters
     // AccelFullScale options: G2, G4, G8, G16 (higher means larger range, lower precision)
@@ -90,11 +100,21 @@ async fn main(_spawner: Spawner) {
 
     // Read the accelerometer data from the mpu6050-dmp sensor again after calibration
     let accel_data = sensor.accel().await.unwrap();
-    info!("Accelerometer Data: {:?}", Debug2Format(&accel_data));
+    info!(
+        "Accelerometer [mg]: x={}, y={}, z={}",
+        accel_data.x() as i32,
+        accel_data.y() as i32,
+        accel_data.z() as i32
+    );
 
     // Read the gyroscope data from the mpu6050-dmp sensor again after calibration
     let gyro_data = sensor.gyro().await.unwrap();
-    info!("Gyroscope Data: {:?}", Debug2Format(&gyro_data));
+    info!(
+        "Gyroscope [deg/s]: x={}, y={}, z={}",
+        gyro_data.x() as i32,
+        gyro_data.y() as i32,
+        gyro_data.z() as i32
+    );
 
     // Main loop: Read sensor data every second
     // - Accelerometer: returns g-force per axis, including gravity
@@ -106,12 +126,20 @@ async fn main(_spawner: Spawner) {
             sensor.gyro().await.unwrap(),
             sensor.temperature().await.unwrap().celsius(),
         );
+        info!("Sensor Readings:");
         info!(
-            "Sensors - Accel: {:?}, Gyro: {:?}, Temp: {:?}°C",
-            Debug2Format(&accel),
-            Debug2Format(&gyro),
-            Debug2Format(&temp)
+            "  Accelerometer [mg]: x={}, y={}, z={}",
+            accel.x() as i32,
+            accel.y() as i32,
+            accel.z() as i32
         );
+        info!(
+            "  Gyroscope [deg/s]: x={}, y={}, z={}",
+            gyro.x() as i32,
+            gyro.y() as i32,
+            gyro.z() as i32
+        );
+        info!("  Temperature: {}°C", temp);
         Timer::after_millis(1000).await;
     }
 }

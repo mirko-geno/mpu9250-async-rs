@@ -17,7 +17,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{info, Debug2Format};
+use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
 use embassy_time::{Delay, Timer};
@@ -92,8 +92,13 @@ async fn main(_spawner: Spawner) {
             // Note: In a real application, you would parse this data according to
             // the sensor's data format specification
             if data.len() >= 6 {
-                // Example: First 6 bytes might be accelerometer data
-                info!("First 6 bytes: {:?}", Debug2Format(&data[..6]));
+                // Display first 6 bytes in both decimal and hex format
+                info!("First 6 bytes:");
+                info!(
+                    "  Dec: {}, {}, {}, {}, {}, {}",
+                    data[0], data[1], data[2], data[3], data[4], data[5]
+                );
+                // Note: defmt doesn't support hex formatting, so we'll just show decimal
             }
         }
 

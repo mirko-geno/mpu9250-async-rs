@@ -36,7 +36,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{info, Debug2Format};
+use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
 use embassy_time::{Delay, Timer};
@@ -119,18 +119,20 @@ async fn main(_spawner: Spawner) {
 
             // Display quaternion components
             // Values are normalized (sum of squares = 1)
+            info!("Orientation:");
             info!(
-                "Quaternion: w={}, x={}, y={}, z={}",
+                "  Quaternion: w={}, x={}, y={}, z={}",
                 quat.w, quat.x, quat.y, quat.z
             );
 
-            // Display YPR angles in radians
-            // Yaw: -π to π (rotation around vertical)
-            // Pitch: -π/2 to π/2 (forward/backward tilt)
-            // Roll: -π to π (side-to-side tilt)
+            // Convert radians to degrees for more intuitive reading
+            let yaw_deg = ypr.yaw * 180.0 / core::f32::consts::PI;
+            let pitch_deg = ypr.pitch * 180.0 / core::f32::consts::PI;
+            let roll_deg = ypr.roll * 180.0 / core::f32::consts::PI;
+
             info!(
-                "YPR (rad): yaw={}, pitch={}, roll={}",
-                ypr.yaw, ypr.pitch, ypr.roll
+                "  Angles [deg]: yaw={}, pitch={}, roll={}",
+                yaw_deg, pitch_deg, roll_deg
             );
         }
 

@@ -127,15 +127,15 @@ async fn main(_spawner: Spawner) {
             let motion = sensor.check_motion().await.unwrap();
             let (accel, gyro) = sensor.motion6().await.unwrap();
 
-            info!("Motion detected! Status: {}", motion.0);
+            info!("Motion Status: {}", motion);
             info!(
-                "Accel: x={}, y={}, z={}",
+                "Acceleration [mg]: x={}, y={}, z={}",
                 accel.x() as i32,
                 accel.y() as i32,
                 accel.z() as i32
             );
             info!(
-                "Gyro: x={}, y={}, z={}",
+                "Gyroscope [deg/s]: x={}, y={}, z={}",
                 gyro.x() as i32,
                 gyro.y() as i32,
                 gyro.z() as i32
