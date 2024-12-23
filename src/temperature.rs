@@ -6,7 +6,7 @@
 ///
 /// The raw temperature value from the sensor needs to be converted using a formula
 /// from the datasheet to get the actual temperature in degrees Celsius.
-/// While the raw value is available via [`raw()`], you should typically use [`celsius()`]
+/// While the raw value is available via [`Temperature::raw()`], you should typically use [`Temperature::celsius()`]
 /// to get the temperature in a standard unit.
 ///
 /// # Example
@@ -43,7 +43,7 @@ impl Temperature {
 
     /// Returns the raw temperature value from the sensor.
     ///
-    /// Note: In most cases, you should use [`celsius()`] instead to get the temperature
+    /// Note: In most cases, you should use [`Temperature::celsius()`] instead to get the temperature
     /// in degrees Celsius. The raw value is primarily useful for debugging or
     /// custom temperature conversion implementations.
     pub fn raw(&self) -> i16 {
