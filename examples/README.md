@@ -34,12 +34,16 @@ Example demonstrating 3D orientation tracking:
 - Convert quaternions to Euler angles (roll, pitch, yaw)
 
 ### Motion Detection (`src/motion_detection.rs`)
-Example showing software-based motion detection:
+Example demonstrating hardware motion detection:
 - Initialize and calibrate the sensor
-- Monitor acceleration changes
-- Detect motion using configurable thresholds
-- Identify periods of stillness
-- Note: Uses software detection since hardware motion detection is not currently supported
+- Configure hardware motion detection with maximum sensitivity
+- Use interrupts for efficient motion monitoring
+- Track both acceleration and rotation data
+- Features:
+  * 2mg threshold for subtle movement detection
+  * 1ms response time for immediate detection
+  * All-axis detection with high-pass filtering
+  * Detailed motion data logging
 
 ## Building and Running
 
@@ -64,24 +68,5 @@ Example showing software-based motion detection:
    cargo run --example quaternion_async
 
    # For motion detection example
-   cargo run --example motion_detection_async
+   cargo run --example motion_detection
    ```
-
-## Features Overview
-
-### Digital Motion Processor (DMP)
-- Offloads complex motion processing from the main processor
-- Enables more efficient and accurate motion tracking
-- Provides filtered and processed sensor data
-
-### FIFO Buffer
-- Stores multiple sensor readings (up to 1024 bytes)
-- Enables batch reading of sensor data
-- Prevents data loss during processing
-- Configurable for different sensor combinations
-
-### Sample Rate and Filtering
-- Configurable sample rates from 4Hz to 1000Hz
-- Digital low-pass filter for noise reduction
-- Balance between data quality and update rate
-- Optimize for your specific application needs
