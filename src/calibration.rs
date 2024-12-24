@@ -352,9 +352,9 @@ impl MeanAccumulator {
 
     /// Adds a new sample (subtracting the reference gravity)
     pub fn add(&mut self, accel: &Accel, gyro: &Gyro) {
-        self.ax += (accel.x() - self.gravity_compensation.x()) as i32;
-        self.ay += (accel.y() - self.gravity_compensation.y()) as i32;
-        self.az += (accel.z() - self.gravity_compensation.z()) as i32;
+        self.ax += (accel.x() as i32) - (self.gravity_compensation.x() as i32);
+        self.ay += (accel.y() as i32) - (self.gravity_compensation.y() as i32);
+        self.az += (accel.z() as i32) - (self.gravity_compensation.z() as i32);
         self.gx += gyro.x() as i32;
         self.gy += gyro.y() as i32;
         self.gz += gyro.z() as i32;
@@ -402,7 +402,10 @@ mod tests {
             let mut mean_acc = MeanAccumulator::new(AccelFullScale::G2, ReferenceGravity::ZN);
             mean_acc.add(&accel, &gyro);
 
-            assert_eq!(mean_acc.az, 32767 - 16384);
+            // This test verifies that extreme accelerometer values (32767) don't overflow
+            // when combined with gravity compensation (-16384). The calculation must be
+            // done in i32 to get the correct result of 49151.
+            assert_eq!(mean_acc.az, 49151);
         }
     }
 
