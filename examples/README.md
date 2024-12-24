@@ -64,24 +64,5 @@ Example showing software-based motion detection:
    cargo run --example quaternion_async
 
    # For motion detection example
-   cargo run --example motion_detection_async
+   cargo run --example motion_detection
    ```
-
-## Features Overview
-
-### Digital Motion Processor (DMP)
-- Offloads complex motion processing from the main processor
-- Enables more efficient and accurate motion tracking
-- Provides filtered and processed sensor data
-
-### FIFO Buffer
-- Stores multiple sensor readings (up to 1024 bytes)
-- Enables batch reading of sensor data
-- Prevents data loss during processing
-- Configurable for different sensor combinations
-
-### Sample Rate and Filtering
-- Configurable sample rates from 4Hz to 1000Hz
-- Digital low-pass filter for noise reduction
-- Balance between data quality and update rate
-- Optimize for your specific application needs

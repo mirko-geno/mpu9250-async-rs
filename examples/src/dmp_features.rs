@@ -16,7 +16,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{info, Debug2Format};
+use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
 use embassy_time::{Delay, Timer};
@@ -68,17 +68,30 @@ async fn main(_spawner: Spawner) {
     // Configure sample rate
     // Higher rates for fast movements (up to 1000Hz)
     // Lower rates for slow movements and power saving
-    sensor.set_sample_rate_divider(9).await.unwrap(); // 100Hz (1000Hz / (1 + 9))
-    info!("Sample rate configured");
+    let divider = 9; // 100Hz (1000Hz / (1 + 9))
+    sensor.set_sample_rate_divider(divider).await.unwrap();
+    info!(
+        "Sample rate configured: {}Hz (1000Hz / (1 + {}))",
+        1000i32 / (1 + divider as i32),
+        divider
+    );
 
     // Main loop demonstrating DMP features
     loop {
         // Read 6-axis motion data
         let (accel, gyro) = sensor.motion6().await.unwrap();
+        info!("Motion Data (100Hz):");
         info!(
-            "Accel: {:?}, Gyro: {:?}",
-            Debug2Format(&accel),
-            Debug2Format(&gyro)
+            "  Acceleration [mg]: x={}, y={}, z={}",
+            accel.x() as i32,
+            accel.y() as i32,
+            accel.z() as i32
+        );
+        info!(
+            "  Gyroscope [deg/s]: x={}, y={}, z={}",
+            gyro.x() as i32,
+            gyro.y() as i32,
+            gyro.z() as i32
         );
 
         Timer::after_millis(10).await;
