@@ -1,36 +1,38 @@
-//! MPU6050 Motion Detection Example
+//! MPU6050 Motion Detection Example using Hardware Interrupt
 //!
 //! This example demonstrates how to use the MPU6050's hardware motion detection feature
-//! to efficiently detect movement without constant CPU monitoring. The implementation:
+//! with its INT pin for efficient, low-power movement detection. The implementation:
 //!
-//! 1. Configures the sensor for maximum sensitivity:
-//!    - Sets minimum threshold (2mg) to detect subtle movements
-//!    - Uses fastest response time (1ms) for immediate detection
-//!    - Enables detection on all axes for complete coverage
-//!    - Configures high-pass filter to remove gravity bias
+//! 1. Configures the sensor for motion detection:
+//!    - Uses 2mg threshold for motion detection sensitivity
+//!    - Sets 1ms duration for motion event qualification
+//!    - Monitors acceleration on all axes
+//!    - Uses digital low-pass filter (DLPF) to reduce noise
 //!
-//! 2. Optimizes sensor settings:
-//!    - Uses most sensitive accelerometer range (±2g)
-//!    - Sets maximum sample rate (1kHz)
-//!    - Configures DLPF for best motion detection
-//!    - Performs proper sensor calibration
+//! 2. Configures sensor settings:
+//!    - Sets accelerometer range to ±2g for maximum sensitivity
+//!    - Uses X-axis gyroscope as clock source for stability
+//!    - Configures 1kHz sampling rate
+//!    - Applies calibration for accurate readings
 //!
-//! 3. Monitors motion events:
-//!    - Uses interrupts for efficient detection
-//!    - Provides detailed motion data when triggered
-//!    - Shows both acceleration and rotation values
-//!    - Logs motion detection status for debugging
+//! 3. Implements interrupt-based detection:
+//!    - Uses MPU6050's INT pin to signal motion events
+//!    - Monitors GPIO input for interrupt signal
+//!    - Samples motion data at 50ms intervals during activity
+//!    - Detects both motion start and stop conditions
 //!
-//! The configuration used here prioritizes maximum sensitivity and fast response.
-//! For different use cases:
-//! - Increase threshold to ignore minor movements
-//! - Increase duration to require sustained motion
-//! - Adjust DLPF settings to filter more noise
+//! This configuration balances sensitivity and reliability.
+//! Adjustable parameters include:
+//! - Motion threshold (currently 2mg)
+//! - Detection duration (currently 1ms)
+//! - Sample rate divider (currently set for 1kHz)
+//! - Digital low-pass filter settings
 //!
 //! Hardware Setup:
 //! - Connect MPU6050 to Raspberry Pi Pico:
-//!   - SDA -> GP14
-//!   - SCL -> GP15
+//!   - SDA -> GP14 (I2C1 data line)
+//!   - SCL -> GP15 (I2C1 clock line)
+//!   - INT -> GP16 (Motion interrupt input)
 //!   - VCC -> 3.3V
 //!   - GND -> GND
 
@@ -39,8 +41,13 @@
 
 use defmt::info;
 use embassy_executor::Spawner;
-use embassy_rp::{block::ImageDef, config::Config, i2c::InterruptHandler};
-use embassy_time::Delay;
+use embassy_rp::{
+    block::ImageDef,
+    config::Config,
+    gpio::{Input, Pull},
+    i2c::InterruptHandler,
+};
+use embassy_time::{Delay, Timer};
 use {defmt_rtt as _, panic_probe as _};
 
 // mpu6050-dmp
@@ -64,6 +71,10 @@ async fn main(_spawner: Spawner) {
     // Initialize I2C and sensor
     let sda = p.PIN_14;
     let scl = p.PIN_15;
+
+    // Configure GPIO16 as interrupt input with pull-up
+    let mut motion_int = Input::new(p.PIN_16, Pull::Up);
+
     let config = embassy_rp::i2c::Config::default();
     let bus = embassy_rp::i2c::I2c::new_async(p.I2C1, scl, sda, Irqs, config);
     let mut sensor = Mpu6050::new(bus, Address::default()).await.unwrap();
@@ -117,29 +128,52 @@ async fn main(_spawner: Spawner) {
         .unwrap();
     sensor.enable_motion_interrupt().await.unwrap();
 
+    // Before entering cyclic measurement, make sure the Interrupt Pin is high
     info!("Starting motion detection");
+    motion_int.wait_for_high().await;
 
     // Main loop monitoring motion detection events
     loop {
-        // Wait for motion detection events
-        if sensor.wait_for_motion(&mut delay).await.unwrap().0 {
-            // Get motion status and current sensor data
-            let motion = sensor.check_motion().await.unwrap();
-            let (accel, gyro) = sensor.motion6().await.unwrap();
+        // Wait for hardware interrupt (INT pin going low)
+        motion_int.wait_for_low().await;
 
-            info!("Motion Status: {}", motion);
-            info!(
-                "Acceleration [mg]: x={}, y={}, z={}",
+        let (accel, gyro) = sensor.motion6().await.unwrap();
+        report_motion(
+            accel.x() as i32,
+            accel.y() as i32,
+            accel.z() as i32,
+            gyro.x() as i32,
+            gyro.y() as i32,
+            gyro.z() as i32,
+        );
+
+        // Monitor motion while it continues
+        while sensor.check_motion().await.unwrap().0 {
+            // Read current sensor data
+            let (accel, gyro) = sensor.motion6().await.unwrap();
+            report_motion(
                 accel.x() as i32,
                 accel.y() as i32,
-                accel.z() as i32
-            );
-            info!(
-                "Gyroscope [deg/s]: x={}, y={}, z={}",
+                accel.z() as i32,
                 gyro.x() as i32,
                 gyro.y() as i32,
-                gyro.z() as i32
+                gyro.z() as i32,
             );
+
+            // Wait 50ms before next check
+            Timer::after_millis(50).await;
         }
+
+        // Wait for INT to go high (motion completely stopped)
+        // before looking for new motion
+        info!("No more motion detected");
+        motion_int.wait_for_high().await;
     }
+}
+
+fn report_motion(accel_x: i32, accel_y: i32, accel_z: i32, gyro_x: i32, gyro_y: i32, gyro_z: i32) {
+    info!(
+        "Acceleration [mg]: x={}, y={}, z={}. Gyroscope [deg/s]: x={}, y={}, z={}",
+        accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z
+    );
 }

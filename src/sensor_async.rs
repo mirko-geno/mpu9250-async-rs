@@ -571,15 +571,22 @@ where
         Ok(status.into())
     }
 
-    /// Wait for motion to be detected.
+    /// Poll for motion detection via I2C.
     ///
-    /// This method will asynchronously wait until motion is detected based on the
-    /// configured threshold and duration parameters.
+    /// This method continuously polls the interrupt status register via I2C until motion is detected.
+    /// While functional, this is not the most efficient approach. For better power efficiency,
+    /// consider using the MPU6050's hardware interrupt pin instead.
+    ///
+    /// The hardware interrupt approach:
+    /// 1. Connect MPU6050 INT pin to a microcontroller GPIO configured as interrupt input
+    /// 2. Configure motion detection and enable the interrupt
+    /// 3. Put the microcontroller into sleep mode
+    /// 4. Let the INT pin wake the microcontroller when motion occurs
     ///
     /// Make sure to call `configure_motion_detection()` and `enable_motion_interrupt()`
-    /// before using this method.
+    /// before using either polling or hardware interrupt methods.
     ///
-    /// # Example
+    /// # Example of polling approach (not recommended for power efficiency)
     /// ```ignore
     /// // Configure motion detection
     /// let config = MotionConfig {
@@ -589,14 +596,14 @@ where
     /// mpu.configure_motion_detection(&config).await?;
     /// mpu.enable_motion_interrupt().await?;
     ///
-    /// // Monitor for motion
+    /// // Poll for motion (consider using hardware interrupt instead)
     /// loop {
-    ///     if mpu.wait_for_motion(&mut delay).await?.0 {
+    ///     if mpu.poll_for_motion(&mut delay).await?.0 {
     ///         println!("Motion detected!");
     ///     }
     /// }
     /// ```
-    pub async fn wait_for_motion(
+    pub async fn poll_for_motion(
         &mut self,
         delay: &mut impl delay::DelayNs,
     ) -> Result<MotionDetected, Error<I>> {
