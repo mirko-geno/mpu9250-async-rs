@@ -36,10 +36,8 @@ Example demonstrating 3D orientation tracking:
 ### [Motion Detection](src/motion_detection.rs)
 Example showing software-based motion detection:
 - Initialize and calibrate the sensor
-- Monitor acceleration changes
 - Detect motion using configurable thresholds
-- Identify periods of stillness
-- Note: Uses software detection since hardware motion detection is not currently supported
+- Wake on Interrupt Pin
 
 ## Building and Running
 
