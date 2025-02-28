@@ -22,6 +22,7 @@
 /// Motion detection configuration parameters
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MotionConfig {
     /// Motion detection threshold in mg (1LSB = 2mg)
     /// Range: 0-255 (0-510mg)
@@ -47,6 +48,7 @@ impl Default for MotionConfig {
 /// Indicates if motion was detected based on the configured threshold and duration
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MotionDetected(pub bool);
 
 impl From<u8> for MotionDetected {

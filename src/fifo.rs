@@ -17,6 +17,7 @@
 /// of sensor data.
 #[derive(Debug, Default, Copy, Clone)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Fifo {
     pub temp: bool,
     pub xg: bool,

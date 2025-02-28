@@ -23,6 +23,7 @@ use crate::quaternion::Quaternion;
 /// Note: These angles can experience gimbal lock when pitch approaches ±90°
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct YawPitchRoll {
     /// Rotation around vertical (Z) axis, -π to π radians
     pub yaw: f32,

@@ -22,6 +22,7 @@ pub(crate) const DELAY_MS: u32 = 2;
 /// Maximum allowed deviation from zero after calibration
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CalibrationThreshold {
     value: i16,
 }
@@ -108,6 +109,7 @@ impl CalibrationThreshold {
 /// - Zero: No gravity compensation
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ReferenceGravity {
     Zero,
     XN,
@@ -150,6 +152,7 @@ impl ReferenceGravity {
 /// - Bits 3-5: Gyroscope (X,Y,Z)
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CalibrationActions {
     flags: u8,
 }
@@ -248,6 +251,7 @@ impl CalibrationActions {
 /// - Gravity compensation direction
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CalibrationParameters {
     /// Acceleration scale
     pub accel_scale: AccelFullScale,
@@ -325,6 +329,7 @@ impl CalibrationParameters {
 /// - Running sum of gyroscope readings
 /// - Gravity compensation vector
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MeanAccumulator {
     pub ax: i32,
     pub ay: i32,

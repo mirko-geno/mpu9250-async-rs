@@ -15,6 +15,7 @@
 /// - Magnitude should be 1 for a pure rotation (normalized)
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Quaternion {
     /// Scalar (real) component
     pub w: f32,
