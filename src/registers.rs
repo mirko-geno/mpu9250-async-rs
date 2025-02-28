@@ -14,6 +14,7 @@
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Register {
     /// Configuration register (0x1A)
     /// Controls the digital low pass filter and external sync

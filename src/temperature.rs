@@ -22,6 +22,7 @@
 /// ```
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Temperature {
     pub(crate) raw: i16,
 }

@@ -20,6 +20,7 @@
 /// - External component availability
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ClockSource {
     /// Internal 8MHz oscillator
     /// - Fastest startup

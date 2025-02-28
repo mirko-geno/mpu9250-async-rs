@@ -10,6 +10,7 @@
 /// Values represent rotation rate in ADC units.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Gyro {
     pub(crate) x: i16,
     pub(crate) y: i16,
@@ -69,6 +70,7 @@ impl Gyro {
 /// - Deg2000: ±2000 degrees/second
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum GyroFullScale {
     /// ±250°/s range (131 LSB/°/s)
     Deg250 = 0,
@@ -102,6 +104,7 @@ impl GyroFullScale {
 /// - Negative: Counter-clockwise rotation
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GyroF32 {
     /// Roll rate (°/s)
     x: f32,

@@ -20,6 +20,7 @@
 /// require left-shifting by 1 to create the 8-bit address.
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Address(pub u8);
 
 impl Default for Address {

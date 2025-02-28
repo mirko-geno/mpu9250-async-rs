@@ -15,6 +15,7 @@ use crate::quaternion::Quaternion;
 /// 3. Yaw (ψ): Rotation around Z axis
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Euler {
     /// Yaw angle (ψ) in radians (-π to π)
     pub psi: f64,
