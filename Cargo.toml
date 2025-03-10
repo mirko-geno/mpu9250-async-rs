@@ -18,6 +18,8 @@ default = []
 defmt-03 = ["dep:defmt"]
 serde = ["dep:serde"]
 async = ["dep:embedded-hal-async"]
+postcard = ["dep:postcard"]
+postcard-experimental = ["postcard", "postcard/experimental-derive"]
 
 [dependencies]
 embedded-hal = { version = "1" }
@@ -26,3 +28,4 @@ libm = "0.2"
 
 serde = { version = "1", features = ["derive"], default-features = false, optional = true }
 defmt = { version = "0.3", optional = true }
+postcard = { version = "1", optional = true }

@@ -18,6 +18,7 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub struct Accel {
     pub(crate) x: i16,
     pub(crate) y: i16,
@@ -95,6 +96,7 @@ impl Accel {
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub enum AccelFullScale {
     /// ±2g range (16384 LSB/g)
     G2 = 0,
@@ -134,6 +136,7 @@ impl AccelFullScale {
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub struct AccelF32 {
     /// X-axis acceleration in g-force
     x: f32,

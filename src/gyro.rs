@@ -11,6 +11,7 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub struct Gyro {
     pub(crate) x: i16,
     pub(crate) y: i16,
@@ -61,6 +62,12 @@ impl Gyro {
     }
 }
 
+impl From<Gyro> for [i16; 3] {
+    fn from(value: Gyro) -> Self {
+        [value.x, value.y, value.z]
+    }
+}
+
 /// Full-scale range settings for the gyroscope.
 ///
 /// Each setting defines the maximum measurable rotation rate:
@@ -71,6 +78,7 @@ impl Gyro {
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub enum GyroFullScale {
     /// ±250°/s range (131 LSB/°/s)
     Deg250 = 0,
@@ -105,6 +113,7 @@ impl GyroFullScale {
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "postcard-experimental", derive(postcard::experimental::max_size::MaxSize))]
 pub struct GyroF32 {
     /// Roll rate (°/s)
     x: f32,
@@ -129,5 +138,11 @@ impl GyroF32 {
 
     pub fn z(&self) -> f32 {
         self.z
+    }
+}
+
+impl From<GyroF32> for [f32; 3] {
+    fn from(value: GyroF32) -> Self {
+        [value.x, value.y, value.z]
     }
 }
