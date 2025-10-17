@@ -1,36 +1,21 @@
-# `mpu6050-dmp`
+# `mpu9250-async`
 
-Platform-independent i<sup>2</sup>c Driver for the InvenSense [MPU-6050 motion-processor](https://invensense.tdk.com/products/motion-tracking/6-axis/mpu-6050/).
-
-## Fork of [drogue-mpu-6050](https://github.com/drogue-iot/drogue-mpu-6050)
-Reasons/differences:
-* Dependency on `drogue-embedded-timer` and `embedded-time` removed
-  - Timers are not required in regular operation, just for setup
-  - drogue-embedded-timer is out of sync with current versions of embedded-time as of time-of-fork
-* Dependency on `log` removed
-* Slight difference in conversion of Quaternion to YPR (no `pitch -= PI`)
-* Various fixes for e.g. clippy lints (also PR'd upstream)
+## Fork of [mpu6050-dmp-rs](https://github.com/barafael/mpu6050-dmp-rs)
+## Disclaimer:
+I forked the original repo because I needed to use mpu9250 instead of mpu6050 for a school project and wanted to add the missing magnetometer readings through I2C. I'm not sure if I'll mantain this repo or add Master I2C protocol to enable DMP.
 
 ## Examples
-
-The `examples` directory contains several examples demonstrating different features:
+The `examples` directory contains several examples demonstrating different features (For now only examples from the original repo):
 
 - **Basic Async**: Basic sensor initialization and data reading
-- **DMP Features**: Digital Motion Processor usage and configuration
 - **FIFO Buffer**: FIFO buffer operations and data processing
 - **Quaternion**: 3D orientation tracking using quaternions
 - **Motion Detection**: Hardware motion detection with configurable sensitivity
 
 See the [examples README](examples/README.md) for detailed information.
 
-## Demo Projects
-- [Demo Project for STM32F1](https://github.com/barafael/mpu6050-dmp-demo-f1)
-- [Demo Project for STM32F4](https://github.com/barafael/mpu6050-dmp-demo-f4)
-
 ## On-Chip DMP 'Digital Motion Processor'
-
-This driver can load the appropriate firmware for quaternion-based on-chip DMP processing.
-
+This driver can load only the appropriate firmware for accelerometer gyroscope quaternion-based on-chip DMP processing.
 ## Setup
 
 ### i<sup>2</sup>c
@@ -55,12 +40,12 @@ let i2c = dp.I2C1.i2c((scl, sda), 400.kHz(), &clocks);
 ### MPU driver
 
 ```rust
-let sensor = Mpu6050::new(i2c, Address::default()).unwrap();
+let sensor = Mpu9250::new(i2c, Address::default()).unwrap();
 ```
 
 ### Temperature Measurement
 
-The MPU-6050 includes an on-chip temperature sensor. Temperature readings are available through the `temperature()` method when the `temperature` feature is enabled (enabled by default):
+The MPU-9250 includes an on-chip temperature sensor. Temperature readings are available through the `temperature()` method when the `temperature` feature is enabled (enabled by default):
 
 ```rust
 // Get temperature reading

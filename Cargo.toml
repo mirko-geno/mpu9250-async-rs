@@ -1,16 +1,13 @@
 [package]
-name = "mpu6050-dmp"
-version = "0.6.1"
-authors = [
-    "Bob McWhirter <bmcwhirt@redhat.com>",
-    "Rafael Bachmann <rafael.bachmann.93@gmail.com",
-]
+name = "mpu9250-async"
+version = "0.1.0"
+authors = ["Mirko Genovesi <mirkogenovesi24@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
-description = "Platform-independent I2C driver for MPU6050. Supports DMP usage. Fork of drogue-mpu-6050 which uses only embedded-hal traits (no dependency on embedded-time or drogue-embedded-timer)."
+description = "Platform-independent I2C driver for MPU9250. Fork of mpu6050-dmp-rs which allows usage mpu6050 async and dmp operations"
 keywords = ["driver", "i2c", "motion", "dmp", "no_std"]
 categories = ["no-std", "embedded"]
-repository = "https://github.com/barafael/mpu6050-dmp-rs"
+repository = "https://github.com/mirko-geno/mpu9250-async-rs"
 readme = "README.md"
 
 [features]
