@@ -1,6 +1,6 @@
 [package]
 name = "mpu9250-async"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Mirko Genovesi <mirkogenovesi24@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
