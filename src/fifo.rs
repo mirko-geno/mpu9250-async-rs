@@ -1,4 +1,4 @@
-/// Configuration for the MPU6050's First-In-First-Out (FIFO) buffer.
+/// Configuration for the MPU9250's First-In-First-Out (FIFO) buffer.
 ///
 /// The FIFO buffer is a hardware queue that stores sensor readings, providing several benefits:
 /// - Reduces I2C bus traffic by allowing batch reading of multiple samples

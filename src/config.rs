@@ -1,4 +1,4 @@
-//! MPU6050 Digital Low-Pass Filter Configuration
+//! MPU9250 Digital Low-Pass Filter Configuration
 //!
 //! The digital low-pass filter (DLPF) reduces noise in sensor readings by:
 //! - Filtering out high-frequency vibrations

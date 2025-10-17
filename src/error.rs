@@ -1,4 +1,4 @@
-//! MPU6050 Error Types
+//! MPU9250 Error Types
 //!
 //! This module defines the error types that can occur when:
 //! - Initializing the sensor
@@ -61,7 +61,7 @@ where
     /// - Invalid register address
     WriteReadError(I::Error),
 
-    /// Connected device is not an MPU6050
+    /// Connected device is not an MPU9250
     /// Common causes:
     /// - Wrong device connected
     /// - Incorrect I2C address

@@ -1,6 +1,6 @@
 //! Accelerometer Data Processing
 //!
-//! The MPU6050's accelerometer measures linear acceleration along three axes:
+//! The MPU9250's accelerometer measures linear acceleration along three axes:
 //! - X: Forward/backward motion
 //! - Y: Left/right motion
 //! - Z: Up/down motion (including gravity)
@@ -32,7 +32,7 @@ impl Accel {
 
     /// Converts raw sensor bytes into acceleration values.
     ///
-    /// The MPU6050 provides 16-bit acceleration values as:
+    /// The MPU9250 provides 16-bit acceleration values as:
     /// - 2 bytes per axis (high byte, low byte)
     /// - Big-endian byte order
     /// - Signed integers (-32768 to +32767)

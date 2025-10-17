@@ -1,16 +1,16 @@
-//! MPU6050 I2C Address Configuration
+//! MPU9250 I2C Address Configuration
 //!
-//! The MPU6050 uses I2C for communication and can be configured with
+//! The MPU9250 uses I2C for communication and can be configured with
 //! one of two 7-bit addresses:
 //! - 0x68 (default, AD0 pin low)
 //! - 0x69 (alternate, AD0 pin high)
 //!
-//! This allows two MPU6050 devices to be used on the same I2C bus.
+//! This allows two MPU9250 devices to be used on the same I2C bus.
 //! The address is selected by connecting the AD0 pin to either:
 //! - GND for address 0x68
 //! - VCC for address 0x69
 
-/// Represents an MPU6050 I2C address.
+/// Represents an MPU9250 I2C address.
 ///
 /// The address is determined by the AD0 pin:
 /// - When AD0 is connected to GND: 0x68 (default)

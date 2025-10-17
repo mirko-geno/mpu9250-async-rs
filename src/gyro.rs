@@ -1,6 +1,6 @@
 //! Gyroscope Data Processing
 //!
-//! The MPU6050's gyroscope measures angular velocity (rotation speed)
+//! The MPU9250's gyroscope measures angular velocity (rotation speed)
 //! around three axes:
 //! - X: Roll rate (side-to-side rotation)
 //! - Y: Pitch rate (forward/backward rotation)

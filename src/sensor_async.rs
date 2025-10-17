@@ -1,4 +1,4 @@
-//! MPU6050 Asynchronous Driver Implementation
+//! MPU9250 Asynchronous Driver Implementation
 //!
 //! This module provides a non-blocking interface to the InvenSense MPU-6050 6-axis motion tracking device.
 //! It implements all sensor functionality using async/await for efficient I/O operations:
@@ -34,7 +34,7 @@ use crate::{
 use embedded_hal_async::{delay, i2c::I2c};
 
 /// InvenSense MPU-6050 Driver
-pub struct Mpu6050<I>
+pub struct Mpu9250<I>
 where
     I: I2c,
 {
@@ -42,7 +42,7 @@ where
     address: u8,
 }
 
-impl<I> Mpu6050<I>
+impl<I> Mpu9250<I>
 where
     I: I2c,
 {
@@ -575,10 +575,10 @@ where
     ///
     /// This method continuously polls the interrupt status register via I2C until motion is detected.
     /// While functional, this is not the most efficient approach. For better power efficiency,
-    /// consider using the MPU6050's hardware interrupt pin instead.
+    /// consider using the MPU9250's hardware interrupt pin instead.
     ///
     /// The hardware interrupt approach:
-    /// 1. Connect MPU6050 INT pin to a microcontroller GPIO configured as interrupt input
+    /// 1. Connect MPU9250 INT pin to a microcontroller GPIO configured as interrupt input
     /// 2. Configure motion detection and enable the interrupt
     /// 3. Put the microcontroller into sleep mode
     /// 4. Let the INT pin wake the microcontroller when motion occurs

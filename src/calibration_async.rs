@@ -16,13 +16,13 @@ use crate::{
     },
     error_async::Error,
     gyro::Gyro,
-    sensor_async::Mpu6050,
+    sensor_async::Mpu9250,
 };
 use embedded_hal_async::{delay::DelayNs, i2c::I2c};
 
 /// Perform a single loop computing the means of the readings
 pub async fn collect_mean_values<I>(
-    mpu: &mut Mpu6050<I>,
+    mpu: &mut Mpu9250<I>,
     delay: &mut impl DelayNs,
     accel_scale: AccelFullScale,
     gravity: ReferenceGravity,
@@ -50,7 +50,7 @@ where
 
 /// A single, full-fledged calibration loop (it also alters the device offset)
 pub async fn calibration_loop<I>(
-    mpu: &mut Mpu6050<I>,
+    mpu: &mut Mpu9250<I>,
     delay: &mut impl DelayNs,
     parameters: &CalibrationParameters,
     actions: CalibrationActions,
@@ -127,7 +127,7 @@ where
 
 /// Repeatedly perform calibration loops until the errors are within the given thresholds
 pub async fn calibrate<I>(
-    mpu: &mut Mpu6050<I>,
+    mpu: &mut Mpu9250<I>,
     delay: &mut impl DelayNs,
     parameters: &CalibrationParameters,
 ) -> Result<(Accel, Gyro), Error<I>>

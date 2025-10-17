@@ -22,7 +22,7 @@ use embedded_hal::{delay, i2c::I2c};
 ///
 /// Provides methods for sensor configuration, calibration, and data reading
 /// using blocking I2C operations.
-pub struct Mpu6050<I>
+pub struct Mpu9250<I>
 where
     I: I2c,
 {
@@ -30,7 +30,7 @@ where
     address: u8,
 }
 
-impl<I> Mpu6050<I>
+impl<I> Mpu9250<I>
 where
     I: I2c,
 {

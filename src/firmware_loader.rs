@@ -17,7 +17,7 @@ use embedded_hal::i2c::I2c;
 use crate::dmp_firmware::FIRMWARE;
 use crate::error::Error;
 use crate::registers::Register;
-use crate::sensor::Mpu6050;
+use crate::sensor::Mpu9250;
 
 /// Size of each memory bank in the DMP program memory
 const BANK_SIZE: usize = 256;
@@ -25,7 +25,7 @@ const BANK_SIZE: usize = 256;
 /// Maximum size of data that can be written in one I2C transaction
 const CHUNK_SIZE: usize = 16;
 
-impl<I> Mpu6050<I>
+impl<I> Mpu9250<I>
 where
     I: I2c,
 {

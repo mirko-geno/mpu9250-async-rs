@@ -1,4 +1,4 @@
-//! MPU6050 Sensor Calibration
+//! MPU9250 Sensor Calibration
 //!
 //! Calibration process:
 //! - Takes multiple readings while sensor is stationary

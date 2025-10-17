@@ -1,6 +1,6 @@
-//! MPU6050 Register Map and Descriptions
+//! MPU9250 Register Map and Descriptions
 //!
-//! The MPU6050 is controlled through its registers, which are organized into groups:
+//! The MPU9250 is controlled through its registers, which are organized into groups:
 //! - Configuration registers: Control sensor behavior and features
 //! - Data registers: Store sensor measurements
 //! - Calibration registers: Store offset values

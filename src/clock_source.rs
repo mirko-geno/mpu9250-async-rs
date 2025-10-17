@@ -1,6 +1,6 @@
-//! MPU6050 Clock Source Configuration
+//! MPU9250 Clock Source Configuration
 //!
-//! The MPU6050 can use different clock sources for timing:
+//! The MPU9250 can use different clock sources for timing:
 //! - Internal oscillator (default, less accurate)
 //! - Gyroscope reference (more stable, recommended)
 //! - External crystals (highest accuracy)
@@ -11,7 +11,7 @@
 //! - Sensor startup time
 //! - Temperature sensitivity
 
-/// Available clock sources for the MPU6050.
+/// Available clock sources for the MPU9250.
 ///
 /// Clock source selection considerations:
 /// - Accuracy requirements

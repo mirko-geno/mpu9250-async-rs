@@ -3,12 +3,12 @@ use embedded_hal_async::i2c::I2c;
 use crate::dmp_firmware::FIRMWARE;
 use crate::error_async::Error;
 use crate::registers::Register;
-use crate::sensor_async::Mpu6050;
+use crate::sensor_async::Mpu9250;
 
 const BANK_SIZE: usize = 256;
 const CHUNK_SIZE: usize = 16;
 
-impl<I> Mpu6050<I>
+impl<I> Mpu9250<I>
 where
     I: I2c,
 {
