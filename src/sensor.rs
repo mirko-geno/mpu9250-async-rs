@@ -3,7 +3,6 @@
 //! This module provides the core functionality for interacting with the MPU-6050 sensor
 //! in a blocking manner. For async operations, see the `sensor_async` module.
 
-use crate::temperature::Temperature;
 use crate::{
     accel::{Accel, AccelFullScale},
     address::Address,
@@ -14,7 +13,9 @@ use crate::{
     error::{Error, InitError},
     fifo::Fifo,
     gyro::{Gyro, GyroFullScale},
-    registers::Register,
+    temperature::Temperature,
+    registers::{Register, Ak8963Register},
+    magnetometer::Mag,
 };
 use embedded_hal::{delay, i2c::I2c};
 
@@ -472,7 +473,7 @@ impl<I> Mpu9250<I> where I: I2c {
     }
 
     /// Writes a value to an AK8963 register using the MPU9250 I2C Master interface.
-    pub fn ak8963_write_register(&mut self, reg: crate::registers::Ak8963Register, value: u8, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
+    pub fn ak8963_write_register(&mut self, reg: Ak8963Register, value: u8, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
         self.write_register(Register::I2cSlv0Addr, 0x0C)?; // AK8963 address, write mode
         self.write_register(Register::I2cSlv0Reg, reg as u8)?;
         self.write_register(Register::I2cSlv0Do, value)?;
@@ -482,7 +483,7 @@ impl<I> Mpu9250<I> where I: I2c {
     }
 
     /// Reads a value from an AK8963 register using the MPU9250 I2C Master interface.
-    pub fn ak8963_read_register(&mut self, reg: crate::registers::Ak8963Register, delay: &mut impl delay::DelayNs) -> Result<u8, Error<I>> {
+    pub fn ak8963_read_register(&mut self, reg: Ak8963Register, delay: &mut impl delay::DelayNs) -> Result<u8, Error<I>> {
         self.write_register(Register::I2cSlv0Addr, 0x8C)?; // AK8963 address, read mode
         self.write_register(Register::I2cSlv0Reg, reg as u8)?;
         self.write_register(Register::I2cSlv0Ctrl, 0x81)?; // Enable, 1 byte
@@ -494,26 +495,26 @@ impl<I> Mpu9250<I> where I: I2c {
     /// Initializes the AK8963 magnetometer in continuous measurement mode 2 (16 bits, 100Hz) and sets up automatic reading of 6 bytes.
     pub fn init_ak8963_master(&mut self, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
         // Set AK8963 to continuous measurement mode 2, 16 bits, 100Hz
-        self.ak8963_write_register(crate::registers::Ak8963Register::Ak8963Cntl1, 0x16, delay)?;
+        self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x16, delay)?;
         // Wait for AK8963 to switch mode
         delay.delay_ms(1);
         // Configure automatic reading of 6 bytes from HXL
         self.write_register(Register::I2cSlv0Addr, 0x8C)?; // AK8963 address, read mode
-        self.write_register(Register::I2cSlv0Reg, crate::registers::Ak8963Register::Ak8963Hxl as u8)?;
+        self.write_register(Register::I2cSlv0Reg, Ak8963Register::Ak8963Hxl as u8)?;
         self.write_register(Register::I2cSlv0Ctrl, 0x86)?; // Enable, 6 bytes
         delay.delay_ms(1);
         Ok(())
     }
 
     /// Reads magnetometer data from EXT_SENS_DATA_00 to EXT_SENS_DATA_05 and returns a Mag struct.
-    pub fn mag(&mut self) -> Result<crate::magnetometer::Mag, Error<I>> {
+    pub fn mag(&mut self) -> Result<Mag, Error<I>> {
         let mut data = [0; 6];
         self.read_registers(Register::ExtSensData00, &mut data)?;
-        Ok(crate::magnetometer::Mag::from_bytes(data))
+        Ok(Mag::from_bytes(data))
     }
 
     /// Gets the 9 degrees of freedom at once - Acceleration, Gyroscope, and Magnetometer.
-    pub fn motion9(&mut self) -> Result<(Accel, Gyro, crate::magnetometer::Mag), Error<I>> {
+    pub fn motion9(&mut self) -> Result<(Accel, Gyro, Mag), Error<I>> {
         let (accel, gyro) = self.motion6()?;
         let mag = self.mag()?;
         Ok((accel, gyro, mag))
