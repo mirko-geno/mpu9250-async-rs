@@ -6,6 +6,7 @@
 //! - Calibration registers: Store offset values
 //! - DMP registers: Control the Digital Motion Processor
 //! - FIFO registers: Manage the FIFO buffer
+//! - I2C registers: Manage Master-Slave to allow magnetometer fusion
 //!
 //! Note: Some hardware features like motion detection are controlled through
 //! registers not currently exposed in this enum (MOT_THR, MOT_DUR, etc.).
@@ -142,4 +143,40 @@ pub enum Register {
     MotionDetectCtrl = 0x69,
     /// Motion Detection Status
     MotionDetectStatus = 0x61,
+
+    // I2C Master Control Registers
+    /// I2C Master Control register (0x24)
+    /// Controls I2C master mode, clock, and multi-master configuration
+    I2cMstCtrl = 0x24,
+
+    // I2C Slave 0 Registers
+    /// Specifies the I2C address slave device 0
+    I2cSlv0Addr = 0x25,
+    /// Selects the starting register in the slave device to read/write
+    I2cSlv0Reg = 0x26,
+    /// Enables/disables slave 0, configures read/write length, and enables batching
+    I2cSlv0Ctrl = 0x27,
+    /// Holds the data to be written to the AK8963
+    I2cSlv0Do   = 0x63,
+
+    // External Sensor Data Registers (0x49–0x4E)
+    /// External Sensor Data registers 0–5 (0x49–0x4E)
+    /// Contain 6 bytes automatically read from the AK8963 magnetometer:
+    /// HXL, HXH, HYL, HYH, HZL, HZH (magnetic field for X, Y, Z axes)
+    ExtSensData00 = 0x49,
+    ExtSensData05 = 0x4E,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum Ak8963Register {
+    /// AK8963 Register Addresses
+    /// Chip identifier
+    Ak8963WhoAmI = 0x00,
+    /// First data byte (X-axis, low)
+    Ak8963Hxl    = 0x03,
+    /// Control register 1 (mode select)
+    Ak8963Cntl1  = 0x0A,
 }
