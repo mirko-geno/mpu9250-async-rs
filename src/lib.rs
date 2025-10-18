@@ -28,3 +28,5 @@ pub mod sensor;
 pub mod sensor_async;
 pub mod temperature;
 pub mod yaw_pitch_roll;
+
+pub mod magnetometer;
