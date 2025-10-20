@@ -1,25 +1,14 @@
-//! Blocking implementation of the MPU-6050 driver.
+//! Blocking implementation of the MPU9250 driver.
 //!
-//! This module provides the core functionality for interacting with the MPU-6050 sensor
+//! This module provides the core functionality for interacting with the MPU9250 sensor
 //! in a blocking manner. For async operations, see the `sensor_async` module.
 
 use crate::{
-    accel::{Accel, AccelFullScale},
-    address::Address,
-    calibration::{CalibrationActions, CalibrationParameters, ReferenceGravity},
-    calibration_blocking::{calibrate, calibration_loop, collect_mean_values},
-    clock_source::ClockSource,
-    config::DigitalLowPassFilter,
-    error::{Error, InitError},
-    fifo::Fifo,
-    gyro::{Gyro, GyroFullScale},
-    temperature::Temperature,
-    registers::{Register, Ak8963Register},
-    magnetometer::Mag,
+    accel::{Accel, AccelFullScale}, address::Address, calibration::{CalibrationActions, CalibrationParameters, ReferenceGravity}, calibration_blocking::{calibrate, calibration_loop, collect_mean_values}, clock_source::ClockSource, config::DigitalLowPassFilter, error::{Error, InitError}, fifo::Fifo, gyro::{Gyro, GyroFullScale}, magnetometer::Mag, registers::{Ak8963Register, Register}, sensor, temperature::Temperature
 };
 use embedded_hal::{delay, i2c::I2c};
 
-/// Blocking implementation of the InvenSense MPU-6050 driver.
+/// Blocking implementation of the InvenSense MPU9250 driver.
 ///
 /// Provides methods for sensor configuration, calibration, and data reading
 /// using blocking I2C operations.
@@ -32,21 +21,59 @@ where
 }
 
 impl<I> Mpu9250<I> where I: I2c {
-    /// Construct a new i2c driver for the MPU-6050
-    pub fn new(i2c: I, address: Address) -> Result<Self, InitError<I>> {
+    /// Construct a new i2c driver for the MPU9250
+    pub fn new(i2c: I, address: Address, delay: &mut impl delay::DelayNs) -> Result<Self, InitError<I>> {
         let mut sensor = Self {
             i2c,
             address: address.into(),
         };
-
-        if let Err(error) = sensor.disable_sleep() {
-            Err(InitError {
+        match sensor.disable_sleep() {
+            Err(error) => Err(InitError {
                 error,
-                i2c: sensor.i2c,
-            })
-        } else {
-            Ok(sensor)
+                i2c: sensor.i2c
+            }),
+            Ok(()) => Ok(sensor)
         }
+    }
+
+    fn init_no_dmp(&mut self, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
+        self.reset(delay)?;
+        self.disable_sleep()?;
+        self.reset_signal_path(delay)?;
+        self.disable_dmp()?;
+        self.set_clock_source(ClockSource::Xgyro)?;
+        self.disable_interrupts()?;
+        self.set_fifo_enabled(Fifo::all_disabled())?;
+        self.set_accel_full_scale(AccelFullScale::G2)?;
+        self.set_sample_rate_divider(4)?;
+        self.set_digital_lowpass_filter(DigitalLowPassFilter::Filter1)?;
+        self.load_firmware()?;
+        self.boot_firmware()?;
+        self.set_gyro_full_scale(GyroFullScale::Deg2000)?;
+        self.enable_fifo()?;
+        self.reset_fifo()?;
+        self.disable_dmp()?;
+        self.enable_dmp()?;
+        Ok(())
+        // Disable sleep mode
+        self.disable_sleep()?;
+        // Set clock source to best available (recommended: Xgyro)
+        self.set_clock_source(ClockSource::Xgyro)?;
+        // Optionally, reset signal path
+        self.reset_signal_path(delay)?;
+        // Disable interrupts
+        self.disable_interrupts()?;
+        // Set default accel and gyro full scale
+        self.set_accel_full_scale(AccelFullScale::G2)?;
+        self.set_gyro_full_scale(GyroFullScale::Deg2000)?;
+        // Set sample rate divider and digital lowpass filter
+        self.set_sample_rate_divider(4)?;
+        self.set_digital_lowpass_filter(DigitalLowPassFilter::Filter1)?;
+        // Enable I2C Master mode
+        self.enable_i2c_master(delay)?;
+        // Initialize AK8963 magnetometer (continuous mode, 16 bits, 100Hz)
+        self.init_ak8963_master(delay)?;
+        Ok(())
     }
 
     /// Returns the underlying I2C peripheral, consuming this driver.
