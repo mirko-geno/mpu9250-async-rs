@@ -42,4 +42,16 @@ impl Mag {
         let z = self.z.to_le_bytes();
         [x[0], x[1], y[0], y[1], z[0], z[1]]
     }
+
+    pub const fn x(&self) -> i16 {
+        self.x
+    }
+
+    pub const fn y(&self) -> i16 {
+        self.y
+    }
+
+    pub const fn z(&self) -> i16 {
+        self.z
+    }
 }
