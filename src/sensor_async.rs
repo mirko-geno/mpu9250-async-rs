@@ -35,6 +35,8 @@ use crate::{
 
 use embedded_hal_async::{delay, i2c::I2c};
 
+const setting_delay: u8 = 1;
+
 /// InvenSense MPU-6050 Driver
 pub struct Mpu9250<I>
 where
@@ -520,7 +522,7 @@ where
         value |= 0x20; // I2C_MST_EN (bit 5)
         self.write_register(Register::UserCtrl, value).await?;
         self.write_register(Register::I2cMstCtrl, 0x0D).await?; // 400kHz internal I2C clock
-        delay.delay_ms(200).await;
+        delay.delay_ms(setting_delay).await;
         Ok(())
     }
 
@@ -530,7 +532,7 @@ where
         self.write_register(Register::I2cSlv0Reg, reg as u8).await?;
         self.write_register(Register::I2cSlv0Do, value).await?;
         self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // Enable, 1 byte
-        delay.delay_ms(200).await;
+        delay.delay_ms(setting_delay).await;
         Ok(())
     }
 
@@ -539,7 +541,7 @@ where
         self.write_register(Register::I2cSlv0Addr, 0x8C).await?; // AK8963 address, read mode
         self.write_register(Register::I2cSlv0Reg, reg as u8).await?;
         self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // Enable, 1 byte
-        delay.delay_ms(200).await;
+        delay.delay_ms(setting_delay).await;
         let value = self.read_register(Register::ExtSensData00).await?;
         Ok(value)
     }
@@ -549,12 +551,12 @@ where
         // Set AK8963 to continuous measurement mode 2, 16 bits, 100Hz
         self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x16, delay).await?;
         // Wait for AK8963 to switch mode
-        delay.delay_ms(200).await;
+        delay.delay_ms(setting_delay).await;
         // Configure automatic reading of 6 bytes from HXL
         self.write_register(Register::I2cSlv0Addr, 0x8C).await?; // AK8963 address, read mode
         self.write_register(Register::I2cSlv0Reg, Ak8963Register::Ak8963Hxl as u8).await?;
         self.write_register(Register::I2cSlv0Ctrl, 0x86).await?; // Enable, 6 bytes
-        delay.delay_ms(200).await;
+        delay.delay_ms(setting_delay).await;
         Ok(())
     }
 
