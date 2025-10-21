@@ -474,7 +474,7 @@ impl<I> Mpu9250<I> where I: I2c {
         value |= 0x20; // I2C_MST_EN (bit 5)
         self.write_register(Register::UserCtrl, value)?;
         self.write_register(Register::I2cMstCtrl, 0x0D)?; // 400kHz internal I2C clock
-        delay.delay_ms(1);
+        delay.delay_ms(200);
         Ok(())
     }
 
@@ -484,7 +484,7 @@ impl<I> Mpu9250<I> where I: I2c {
         self.write_register(Register::I2cSlv0Reg, reg as u8)?;
         self.write_register(Register::I2cSlv0Do, value)?;
         self.write_register(Register::I2cSlv0Ctrl, 0x81)?; // Enable, 1 byte
-        delay.delay_ms(1);
+        delay.delay_ms(200);
         Ok(())
     }
 
@@ -493,7 +493,7 @@ impl<I> Mpu9250<I> where I: I2c {
         self.write_register(Register::I2cSlv0Addr, 0x8C)?; // AK8963 address, read mode
         self.write_register(Register::I2cSlv0Reg, reg as u8)?;
         self.write_register(Register::I2cSlv0Ctrl, 0x81)?; // Enable, 1 byte
-        delay.delay_ms(1);
+        delay.delay_ms(200);
         let value = self.read_register(Register::ExtSensData00)?;
         Ok(value)
     }
@@ -503,12 +503,12 @@ impl<I> Mpu9250<I> where I: I2c {
         // Set AK8963 to continuous measurement mode 2, 16 bits, 100Hz
         self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x16, delay)?;
         // Wait for AK8963 to switch mode
-        delay.delay_ms(1);
+        delay.delay_ms(200);
         // Configure automatic reading of 6 bytes from HXL
         self.write_register(Register::I2cSlv0Addr, 0x8C)?; // AK8963 address, read mode
         self.write_register(Register::I2cSlv0Reg, Ak8963Register::Ak8963Hxl as u8)?;
         self.write_register(Register::I2cSlv0Ctrl, 0x86)?; // Enable, 6 bytes
-        delay.delay_ms(1);
+        delay.delay_ms(200);
         Ok(())
     }
 
