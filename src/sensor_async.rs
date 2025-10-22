@@ -35,7 +35,7 @@ use crate::{
 
 use embedded_hal_async::{delay, i2c::I2c};
 
-const setting_delay: u8 = 1;
+const setting_delay: u32 = 1;
 
 /// InvenSense MPU-6050 Driver
 pub struct Mpu9250<I>
