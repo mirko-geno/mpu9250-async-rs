@@ -522,48 +522,98 @@ where
         value |= 0x20; // I2C_MST_EN (bit 5)
         self.write_register(Register::UserCtrl, value).await?;
         self.write_register(Register::I2cMstCtrl, 0x0D).await?; // 400kHz internal I2C clock
+        // Important: allow master delayed reads for slave0 so master reads line up with AK8963 sampling
+        self.write_register(Register::I2cMstDelayCtrl, 0x01).await?; // enable SLV0 delay
         delay.delay_ms(setting_delay).await;
         Ok(())
     }
 
     /// Writes a value to an AK8963 register using the MPU9250 I2C Master interface.
     pub async fn ak8963_write_register(&mut self, reg: Ak8963Register, value: u8, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
-        self.write_register(Register::I2cSlv0Addr, 0x0C).await?; // AK8963 address, write mode
+        const AK8963_ADDR_WRITE: u8 = 0x0C; // 7-bit address in bits[6:0], write => bit7 = 0
+        // Configure slave0 to write single byte
+        self.write_register(Register::I2cSlv0Addr, AK8963_ADDR_WRITE).await?; // write mode
         self.write_register(Register::I2cSlv0Reg, reg as u8).await?;
         self.write_register(Register::I2cSlv0Do, value).await?;
-        self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // Enable, 1 byte
+        self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // EN + 1 byte
         delay.delay_ms(setting_delay).await;
+        // disable SLV0 to avoid leaving it enabled
+        self.write_register(Register::I2cSlv0Ctrl, 0x00).await?;
         Ok(())
     }
 
-    /// Reads a value from an AK8963 register using the MPU9250 I2C Master interface.
     pub async fn ak8963_read_register(&mut self, reg: Ak8963Register, delay: &mut impl delay::DelayNs) -> Result<u8, Error<I>> {
-        self.write_register(Register::I2cSlv0Addr, 0x8C).await?; // AK8963 address, read mode
+        const AK8963_ADDR_READ: u8 = 0x8C; // 0x0C | 0x80 (read = bit7 set)
+        // Configure slave0 to read single byte
+        self.write_register(Register::I2cSlv0Addr, AK8963_ADDR_READ).await?; // read mode
         self.write_register(Register::I2cSlv0Reg, reg as u8).await?;
-        self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // Enable, 1 byte
+        self.write_register(Register::I2cSlv0Ctrl, 0x81).await?; // EN + 1 byte
         delay.delay_ms(setting_delay).await;
         let value = self.read_register(Register::ExtSensData00).await?;
+        // disable SLV0 so it doesn't keep repeating unexpected reads
+        self.write_register(Register::I2cSlv0Ctrl, 0x00).await?;
         Ok(value)
     }
 
     /// Initializes the AK8963 magnetometer in continuous measurement mode 2 (16 bits, 100Hz) and sets up automatic reading of 6 bytes.
     pub async fn init_ak8963_master(&mut self, delay: &mut impl delay::DelayNs) -> Result<(), Error<I>> {
-        // Set AK8963 to continuous measurement mode 2, 16 bits, 100Hz
+        // 1) Ensure AK8963 in power-down first (recommended)
+        self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x00, delay).await?;
+        delay.delay_ms(10).await;
+
+        // 2) Optional: enter Fuse ROM access if you need ASA (skip if not needed)
+        // self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x0F, delay).await?;
+        // delay.delay_ms(10).await;
+        // ... read ASA if required ...
+
+        // 3) Set continuous mode 2, 16-bit (0x16)
         self.ak8963_write_register(Ak8963Register::Ak8963Cntl1, 0x16, delay).await?;
-        // Wait for AK8963 to switch mode
-        delay.delay_ms(setting_delay).await;
-        // Configure automatic reading of 6 bytes from HXL
-        self.write_register(Register::I2cSlv0Addr, 0x8C).await?; // AK8963 address, read mode
+        delay.delay_ms(10).await;
+
+        // 4) Verify WHO_AM_I via the master (quick check)
+        let who = self.ak8963_read_register(Ak8963Register::Ak8963WhoAmI, delay).await?;
+        if who != 0x48 {
+            // Not fatal here, but return an error so caller can inspect
+            log::warn!("AK8963 WHO_AM_I expected 0x48 got {:#X}", who);
+            // Still try to setup auto read — but caller should see the warn/error.
+        }
+
+        // 5) Configure automatic reading of 6 bytes from HXL
+        const AK8963_ADDR_READ: u8 = 0x8C;
+        self.write_register(Register::I2cSlv0Addr, AK8963_ADDR_READ).await?; // read mode
         self.write_register(Register::I2cSlv0Reg, Ak8963Register::Ak8963Hxl as u8).await?;
-        self.write_register(Register::I2cSlv0Ctrl, 0x86).await?; // Enable, 6 bytes
-        delay.delay_ms(setting_delay).await;
+        self.write_register(Register::I2cSlv0Ctrl, 0x86).await?; // EN + 6 bytes
+        // Do NOT disable SLV0 here: we want continuous auto read.
+        delay.delay_ms(10).await;
         Ok(())
     }
 
+    pub async fn ak8963_wait_drdy(&mut self, delay: &mut impl delay::DelayNs, timeout_ms: u32) -> Result<(), Error<I>> {
+        let mut waited = 0;
+        while waited < timeout_ms {
+            let st1 = self.ak8963_read_register(Ak8963Register::Ak8963St1, delay).await?;
+            if (st1 & 0x01) != 0 {
+                // data ready
+                return Ok(());
+            }
+            delay.delay_ms(5).await;
+            waited += 5;
+        }
+        Err(Error::Custom("AK8963 DRDY timeout".into()))
+    }
+
     /// Reads magnetometer data from EXT_SENS_DATA_00 to EXT_SENS_DATA_05 and returns a Mag struct.
-    pub async fn mag(&mut self) -> Result<Mag, Error<I>> {
+    pub async fn mag(&mut self, delay: &mut impl delay::DelayNs) -> Result<Mag, Error<I>> {
+        // wait up to 100ms for DRDY
+        let _ = self.ak8963_wait_drdy(delay, 100).await.ok(); // no fatal, best-effort
         let mut data = [0; 6];
         self.read_registers(Register::ExtSensData00, &mut data).await?;
+        // Check ST2 overflow bit via single read if desired:
+        let st2 = self.ak8963_read_register(Ak8963Register::Ak8963St2, delay).await?;
+        if (st2 & 0x08) != 0 {
+            log::warn!("AK8963 data overflow (ST2 bit 3 set)");
+            // handle overflow if needed
+        }
         Ok(Mag::from_bytes(data))
     }
 

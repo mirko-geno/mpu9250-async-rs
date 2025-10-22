@@ -148,6 +148,9 @@ pub enum Register {
     /// I2C Master Control register (0x24)
     /// Controls I2C master mode, clock, and multi-master configuration
     I2cMstCtrl = 0x24,
+    /// I2C Master Delay Control (0x67)
+    /// Controls delayed reads for external slaves (I2C_SLVx_DLY_EN)
+    I2cMstDelayCtrl = 0x67,
 
     // I2C Slave 0 Registers
     /// Specifies the I2C address slave device 0
@@ -179,4 +182,8 @@ pub enum Ak8963Register {
     Ak8963Hxl    = 0x03,
     /// Control register 1 (mode select)
     Ak8963Cntl1  = 0x0A,
+    /// Status 1 (DRDY)
+    Ak8963St1 = 0x02,
+    /// Status 2 (HOFL etc)
+    Ak8963St2 = 0x09,
 }
